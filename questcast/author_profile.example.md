@@ -1,6 +1,6 @@
 # Author Profile — scaffold
 
-Copy this file to your data directory (default `~/XPosts/author_profile.md`)
+Copy this file to your data directory (default `~/QuestCast/author_profile.md`)
 and rewrite it in your own words. It never belongs in the repo: it is your
 voice, and for most people it contains details they would not publish as a
 config file.
@@ -124,7 +124,7 @@ today's item from, instead of a web search.*
 
 One feed URL per line; bullets are stripped. Only `https://` feeds are read,
 and a feed that redirects to plain `http://` is skipped. The newest 3 entries
-of each feed are offered (set `AI_POST_RSS_PER_FEED` to change that), so
+of each feed are offered (set `QC_POST_RSS_PER_FEED` to change that), so
 high-volume feeds don't crowd out the rest. Prefer original vendor and project
 blogs over aggregators.
 

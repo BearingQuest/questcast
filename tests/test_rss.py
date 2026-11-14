@@ -85,7 +85,7 @@ def test_cap_holds_per_feed_newest_first(web):
 
 
 def test_cap_is_configurable(monkeypatch, web):
-    monkeypatch.setenv("AI_POST_RSS_PER_FEED", "1")
+    monkeypatch.setenv("QC_POST_RSS_PER_FEED", "1")
     web.add(FEED_A, FIVE)
     web.add(FEED_B, FIVE)
     assert search.RssSearch(PROFILE).candidates([], [], "").count("Title: ") == 2
@@ -93,10 +93,10 @@ def test_cap_is_configurable(monkeypatch, web):
 
 @pytest.mark.parametrize("value", ["0", "-2", "three"])
 def test_bad_cap_exits(monkeypatch, value):
-    monkeypatch.setenv("AI_POST_RSS_PER_FEED", value)
+    monkeypatch.setenv("QC_POST_RSS_PER_FEED", value)
     with pytest.raises(SystemExit) as exc:
         config.rss_per_feed()
-    assert "AI_POST_RSS_PER_FEED" in exc.value.code
+    assert "QC_POST_RSS_PER_FEED" in exc.value.code
 
 
 def test_used_entries_are_filtered_before_the_cap(web):

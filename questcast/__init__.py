@@ -12,7 +12,7 @@ The menu comes from the '## Topics' section of your author profile if you
 have one, otherwise from TOPIC_CATALOG below.
 
 What makes the posts sound like YOU is an author profile file kept outside
-this repo (default: ~/XPosts/author_profile.md). `qc init` copies the
+this repo (default: ~/QuestCast/author_profile.md). `qc init` copies the
 scaffold, author_profile.example.md in this package, there to fill in.
 
 Default behavior is draft-only: both posts are printed and appended to
@@ -29,9 +29,10 @@ Requirements:
     Python standard library only for groq and openai-compat.
     The 'anthropic' extra        (only for --provider anthropic)
     Installed qc, from the clone:  uv tool install --reinstall '.[anthropic]'
-    The clone's venv:               ~/.ai_post_venv/bin/pip install -e '.[anthropic]'
+    The clone's venv:               ~/.qc_post_venv/bin/pip install -e '.[anthropic]'
+                                    (or ~/.ai_post_venv)
     The pinned version is in pyproject.toml.
     pip install tweepy           (only for --post; the clone's venv only)
 
-Credentials are read from ~/.ai_post_env — see README.md.
+Credentials are read from ~/.qc_post_env (or ~/.ai_post_env) — see README.md.
 """

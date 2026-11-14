@@ -50,10 +50,10 @@ def test_default_budget_is_7000():
 
 @pytest.mark.parametrize("value", ["0", "-1", "lots"])
 def test_bad_budget_exits(monkeypatch, value):
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", value)
+    monkeypatch.setenv("QC_POST_TOKEN_BUDGET", value)
     with pytest.raises(SystemExit) as exc:
         config.token_budget()
-    assert "AI_POST_TOKEN_BUDGET" in exc.value.code
+    assert "QC_POST_TOKEN_BUDGET" in exc.value.code
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def five(web):
 
 
 def candidates(monkeypatch, per_feed="5"):
-    monkeypatch.setenv("AI_POST_RSS_PER_FEED", per_feed)
+    monkeypatch.setenv("QC_POST_RSS_PER_FEED", per_feed)
     rss_search = search.RssSearch(FULL_PROFILE)
     rss_search.candidates([], [], "")
     return rss_search
@@ -86,7 +86,7 @@ def test_lowest_ranked_are_dropped_first_and_links_match(monkeypatch, five):
     build = build_for(rss_search)
     # A budget that fits the prompt with exactly three of the five entries.
     three = prompt.estimate_tokens(build(feeds.format_candidates(rss_search.picked[:3])))
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", str(three))
+    monkeypatch.setenv("QC_POST_TOKEN_BUDGET", str(three))
     block = rss_search.fit_budget(build)
     assert [e["title"] for e in rss_search.sent] == ["A14", "A13", "A12"]
     assert rss_search.links == {
@@ -100,18 +100,18 @@ def test_lowest_ranked_are_dropped_first_and_links_match(monkeypatch, five):
 
 def test_over_budget_with_no_entries_names_the_profile_size(monkeypatch, five):
     rss_search = candidates(monkeypatch)
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "100")
+    monkeypatch.setenv("QC_POST_TOKEN_BUDGET", "100")
     with pytest.raises(SystemExit) as exc:
         rss_search.fit_budget(build_for(rss_search))
     message = exc.value.code
     size = len("Practitioners.") + len("Plain.")
     assert f"come to {size:,} characters" in message
-    assert "AI_POST_TOKEN_BUDGET (100)" in message
+    assert "QC_POST_TOKEN_BUDGET (100)" in message
     assert config.NOTHING_LOST in message
 
 
 def test_count_cap_still_applies_before_the_budget(monkeypatch, five):
-    monkeypatch.setenv("AI_POST_RSS_MAX_ENTRIES", "2")
+    monkeypatch.setenv("QC_POST_RSS_MAX_ENTRIES", "2")
     rss_search = candidates(monkeypatch)
     rss_search.fit_budget(build_for(rss_search))
     assert [e["title"] for e in rss_search.picked] == ["A14", "A13"]
@@ -126,7 +126,7 @@ def rss_run(monkeypatch, web, profile_file):
     )
     web.add("https://feeds.example/b.xml", b"x", status=503)
     monkeypatch.setenv("GROQ_API_KEY", SENTINEL_KEY)
-    monkeypatch.setenv("AI_POST_RSS_PER_FEED", "5")
+    monkeypatch.setenv("QC_POST_RSS_PER_FEED", "5")
     monkeypatch.setattr(
         sys,
         "argv",
@@ -141,14 +141,14 @@ def sent_prompt(web):
 
 def test_run_says_how_many_entries_were_sent(monkeypatch, rss_run, isolated, capsys):
     rss_run.add(GROQ_URL, completion(MODEL_OUTPUT))
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "1000000")
+    monkeypatch.setenv("QC_POST_TOKEN_BUDGET", "1000000")
     cli.run()
     assert "feed entries to fit" not in capsys.readouterr().err
     assert sent_prompt(rss_run).count("Title: ") == 5
 
     budget = prompt.estimate_tokens(sent_prompt(rss_run)) - 1  # one entry too many
     (isolated / "history.json").unlink()  # so the same pick isn't refused as used
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", str(budget))
+    monkeypatch.setenv("QC_POST_TOKEN_BUDGET", str(budget))
     cli.run()
     assert "Sending 4 of 5 feed entries to fit the token budget" in capsys.readouterr().err
     assert sent_prompt(rss_run).count("Title: ") == 4

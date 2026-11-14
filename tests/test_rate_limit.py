@@ -66,11 +66,11 @@ def test_wait_over_the_limit_is_not_retried(web, groq, clock):
         groq.generate("prompt")
     assert len(web.requests) == 1
     assert clock.slept == []
-    assert "Groq asked for 3600 s, longer than AI_POST_RATE_LIMIT_WAIT (60)" in exc.value.code
+    assert "Groq asked for 3600 s, longer than QC_POST_RATE_LIMIT_WAIT (60)" in exc.value.code
 
 
 def test_wait_at_the_limit_is_retried(monkeypatch, web, groq, clock):
-    monkeypatch.setenv("AI_POST_RATE_LIMIT_WAIT", "10")
+    monkeypatch.setenv("QC_POST_RATE_LIMIT_WAIT", "10")
     web.add_sequence(GROQ_URL, [limited(headers={"retry-after": "10"}), OK])
     groq.generate("prompt")
     assert clock.slept == [11]
@@ -86,7 +86,7 @@ def test_no_usable_wait_is_not_retried(web, groq, clock, message):
 
 
 def test_setting_0_turns_the_retry_off(monkeypatch, web, groq, clock):
-    monkeypatch.setenv("AI_POST_RATE_LIMIT_WAIT", "0")
+    monkeypatch.setenv("QC_POST_RATE_LIMIT_WAIT", "0")
     web.add_sequence(GROQ_URL, [limited(TPM, {"retry-after": "5"}), OK])
     with pytest.raises(SystemExit) as exc:
         groq.generate("prompt")
@@ -128,10 +128,10 @@ def test_openai_compat_retries_too(monkeypatch, web, clock, capsys):
 
 @pytest.mark.parametrize("value", ["-1", "soon", "1.5", "\N{FULLWIDTH DIGIT SIX}"])
 def test_bad_rate_limit_wait_exits(monkeypatch, value):
-    monkeypatch.setenv("AI_POST_RATE_LIMIT_WAIT", value)
+    monkeypatch.setenv("QC_POST_RATE_LIMIT_WAIT", value)
     with pytest.raises(SystemExit) as exc:
         config.rate_limit_wait()
-    assert "AI_POST_RATE_LIMIT_WAIT" in exc.value.code
+    assert "QC_POST_RATE_LIMIT_WAIT" in exc.value.code
 
 
 def test_rate_limit_wait_defaults_to_60():

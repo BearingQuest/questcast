@@ -36,7 +36,8 @@ def test_missing_anthropic_names_its_extra_and_both_routes(monkeypatch):
         providers.AnthropicProvider().generate("prompt")
     assert "--provider anthropic" in exc.value.code
     assert "uv tool install --reinstall '.[anthropic]'" in exc.value.code
-    assert "~/.ai_post_venv/bin/pip install -e '.[anthropic]'" in exc.value.code
+    assert "~/.qc_post_venv/bin/pip install -e '.[anthropic]'" in exc.value.code
+    assert "(or ~/.ai_post_venv)" in exc.value.code
     assert_no_version(exc.value.code)
 
 
@@ -45,6 +46,7 @@ def test_missing_tweepy_names_the_venv_route_only(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         publish.post_to_x("post")
     assert "--post" in exc.value.code
-    assert "~/.ai_post_venv/bin/pip install tweepy" in exc.value.code
+    assert "~/.qc_post_venv/bin/pip install tweepy" in exc.value.code
+    assert "(or ~/.ai_post_venv)" in exc.value.code
     assert "[x]" not in exc.value.code
     assert_no_version(exc.value.code)

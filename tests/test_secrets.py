@@ -61,7 +61,7 @@ def test_connection_error_is_redacted(web, groq):
 @pytest.fixture
 def no_retry(monkeypatch):
     """The R24 message on its own: retries off (R51 is in test_rate_limit.py)."""
-    monkeypatch.setenv("AI_POST_RATE_LIMIT_WAIT", "0")
+    monkeypatch.setenv("QC_POST_RATE_LIMIT_WAIT", "0")
 
 
 def test_429_suggests_waiting_and_rss(web, groq, no_retry):
@@ -110,8 +110,8 @@ def test_429_without_retry_after_still_says_wait(web, groq):
 @pytest.mark.parametrize(
     ("native", "remedies"),
     [
-        (False, ["AI_POST_RSS_MAX_ENTRIES", "AI_POST_RSS_PER_FEED"]),
-        (True, ["--search rss", "AI_POST_RSS_MAX_ENTRIES"]),
+        (False, ["QC_POST_RSS_MAX_ENTRIES", "QC_POST_RSS_PER_FEED"]),
+        (True, ["--search rss", "QC_POST_RSS_MAX_ENTRIES"]),
     ],
 )
 def test_413_says_too_large_and_never_wait(web, groq, native, remedies):
@@ -241,14 +241,14 @@ def test_provider_response_over_2_mb_is_refused(web, groq):
 
 
 def test_env_file_path_is_read_at_call_time(monkeypatch, tmp_path):
-    """The AI_POST_ENV_FILE in force at call time is read, never the real
-    ~/.ai_post_env."""
+    """The QC_POST_ENV_FILE in force at call time is read, never the real
+    ~/.qc_post_env."""
     var = "XGP_TEST_ENV_FILE_VALUE"
     monkeypatch.setenv(var, "placeholder")
     monkeypatch.delenv(var)  # restored to unset after the test
     env_file = tmp_path / "test.env"
     env_file.write_text(f"export {var}='from the patched file'\n")
-    monkeypatch.setenv("AI_POST_ENV_FILE", str(env_file))
+    monkeypatch.setenv("QC_POST_ENV_FILE", str(env_file))
     read = []
     real_read_text = Path.read_text
 
@@ -260,7 +260,7 @@ def test_env_file_path_is_read_at_call_time(monkeypatch, tmp_path):
     config.load_env_file()
     assert os.environ[var] == "from the patched file"
     assert read == [env_file]
-    assert Path.home() / ".ai_post_env" not in read
+    assert Path.home() / ".qc_post_env" not in read
 
 
 def test_redact_ignores_empty_and_short_values():

@@ -126,7 +126,8 @@ class AnthropicProvider:
                 "\n--provider anthropic needs the anthropic package (the 'anthropic' extra).\n"
                 "From the repo clone, install it one of two ways:\n\n"
                 "  installed qc:      uv tool install --reinstall '.[anthropic]'\n"
-                "  the clone's venv:   ~/.ai_post_venv/bin/pip install -e '.[anthropic]'\n"
+                "  the clone's venv:   ~/.qc_post_venv/bin/pip install -e '.[anthropic]'\n"
+                "                      (or ~/.ai_post_venv)\n"
             ) from None
 
         extra = {}
@@ -289,7 +290,7 @@ def chat_completion(provider: OpenAICompatProvider, body: dict, native_search: b
             if attempt == 1 and wait is not None and 0 < max_wait < wait:
                 message += (
                     f"\n\n  {provider.label} asked for {wait:g} s, longer than "
-                    f"AI_POST_RATE_LIMIT_WAIT ({max_wait}), so it didn't wait."
+                    f"QC_POST_RATE_LIMIT_WAIT ({max_wait}), so it didn't wait."
                 )
             raise SystemExit(f"\n{net.redact(message, key)}\n") from None
         except TimeoutError:
@@ -417,7 +418,7 @@ def limit_reason(body: str) -> str:
 def timeout_message(provider: OpenAICompatProvider, timeout: float) -> str:
     return (
         f"\n{provider.name} sent no response within {timeout:g} seconds.\n\n"
-        "  Server-side search can be slow. Raise AI_POST_PROVIDER_TIMEOUT,\n"
+        "  Server-side search can be slow. Raise QC_POST_PROVIDER_TIMEOUT,\n"
         f"  or use --search rss so the model only writes.\n\n  {NOTHING_LOST}\n"
     )
 
@@ -493,13 +494,13 @@ def friendly_http_error(
     if code == 413:  # R24: waiting won't shrink the request
         if native_search:
             remedy = (
-                "  Use --search rss with a smaller AI_POST_RSS_MAX_ENTRIES (for example\n"
+                "  Use --search rss with a smaller QC_POST_RSS_MAX_ENTRIES (for example\n"
                 "  10), so the model only writes from a short list of feed entries."
             )
         else:
             remedy = (
-                "  Send fewer feed entries: lower AI_POST_RSS_MAX_ENTRIES\n"
-                f"  (default {DEFAULT_RSS_MAX_ENTRIES}) or AI_POST_RSS_PER_FEED"
+                "  Send fewer feed entries: lower QC_POST_RSS_MAX_ENTRIES\n"
+                f"  (default {DEFAULT_RSS_MAX_ENTRIES}) or QC_POST_RSS_PER_FEED"
                 f" (default {DEFAULT_RSS_PER_FEED})."
             )
         return (
@@ -530,11 +531,11 @@ def friendly_http_error(
 
 
 def select_provider(flag: str | None) -> str:
-    """--provider, then AI_POST_PROVIDER, then the default (R1)."""
+    """--provider, then QC_POST_PROVIDER, then the default (R1)."""
     name = (flag or config.provider_setting() or DEFAULT_PROVIDER).strip().lower()
     if name not in PROVIDERS:
         raise SystemExit(
-            f"\nUnknown provider {name!r} (from AI_POST_PROVIDER). "
+            f"\nUnknown provider {name!r} (from QC_POST_PROVIDER). "
             f"Choose one of: {', '.join(PROVIDERS)}.\n"
         )
     return name

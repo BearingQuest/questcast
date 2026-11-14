@@ -66,6 +66,7 @@ REQUIRED_DENY = [
     "Edit(/tests/acceptance/**)",
     "Edit(/.claude/settings.json)",
     "Read(~/.ai_post_env)",
+    "Read(~/.qc_post_env)",
 ]
 
 REQUIRED_ASK = [
@@ -79,7 +80,9 @@ REQUIRED_ASK = [
     "Bash(gh * api)",
     "Bash(gh * api *)",
     "Bash(python3 *)",
+    "Bash(python *)",
     "Bash(*.ai_post_env*)",
+    "Bash(*.qc_post_env*)",
 ]
 
 

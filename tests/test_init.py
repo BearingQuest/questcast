@@ -22,8 +22,8 @@ def run_init(monkeypatch):
 
 
 def test_creates_directory_and_profile_with_mode_600(monkeypatch, tmp_path, capsys):
-    data = tmp_path / "new" / "XPosts"
-    monkeypatch.setenv("AI_POST_DATA_DIR", str(data))
+    data = tmp_path / "new" / "QuestCast"
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(data))
 
     run_init(monkeypatch)
 
@@ -34,8 +34,8 @@ def test_creates_directory_and_profile_with_mode_600(monkeypatch, tmp_path, caps
 
 
 def test_new_data_directory_gets_mode_700(monkeypatch, tmp_path):
-    data = tmp_path / "XPosts"
-    monkeypatch.setenv("AI_POST_DATA_DIR", str(data))
+    data = tmp_path / "QuestCast"
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(data))
 
     run_init(monkeypatch)
 
@@ -43,10 +43,10 @@ def test_new_data_directory_gets_mode_700(monkeypatch, tmp_path):
 
 
 def test_existing_data_directory_keeps_its_mode(monkeypatch, tmp_path):
-    data = tmp_path / "XPosts"
+    data = tmp_path / "QuestCast"
     data.mkdir()
     data.chmod(0o755)
-    monkeypatch.setenv("AI_POST_DATA_DIR", str(data))
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(data))
 
     run_init(monkeypatch)
 
@@ -71,21 +71,21 @@ def test_existing_profile_is_left_byte_identical(monkeypatch, tmp_path, capsys):
     assert "already exists" in capsys.readouterr().err
 
 
-def test_honors_ai_post_data_dir(monkeypatch, tmp_path):
+def test_honors_qc_post_data_dir(monkeypatch, tmp_path):
     data = tmp_path / "custom"
-    monkeypatch.setenv("AI_POST_DATA_DIR", str(data))
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(data))
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
 
     run_init(monkeypatch)
 
     assert (data / "author_profile.md").exists()
-    assert not (tmp_path / "home" / "XPosts").exists()
+    assert not (tmp_path / "home" / "QuestCast").exists()
 
 
-def test_defaults_to_xposts_in_home(monkeypatch, tmp_path):
-    monkeypatch.delenv("AI_POST_DATA_DIR")
+def test_defaults_to_questcast_in_home(monkeypatch, tmp_path):
+    monkeypatch.delenv("QC_POST_DATA_DIR")
     monkeypatch.setenv("HOME", str(tmp_path))
 
     run_init(monkeypatch)
 
-    assert (tmp_path / "XPosts" / "author_profile.md").read_bytes() == EXAMPLE
+    assert (tmp_path / "QuestCast" / "author_profile.md").read_bytes() == EXAMPLE

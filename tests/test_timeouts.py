@@ -4,8 +4,8 @@ import urllib.error
 
 import pytest
 
+from questcast import config, providers, search
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
-from xgenerateposts import config, providers, search
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 

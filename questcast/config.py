@@ -29,7 +29,7 @@ DEFAULT_PROVIDER_TIMEOUT = 120.0  # seconds, override with AI_POST_PROVIDER_TIME
 DEFAULT_RATE_LIMIT_WAIT = 60  # seconds
 RATE_LIMIT_MARGIN = 1.0  # seconds added to the provider's suggestion
 
-HTTP_USER_AGENT = "XGeneratePosts/3 (+https://github.com/BearingQuest/questcast)"
+HTTP_USER_AGENT = "QuestCast/3 (+https://github.com/BearingQuest/questcast)"
 MAX_RESPONSE_BYTES = 2_000_000  # cap on any one provider response we read
 MAX_FEED_BYTES = 10_000_000  # feeds get their own cap; some run past 2 MB (R23)
 
@@ -63,7 +63,7 @@ PROMPT_USED_LIMIT = 20
 MAX_TWEET_TEXT = 255  # 280 minus ~24 chars X reserves for a t.co link
 MAX_LINKEDIN_TEXT = 1100  # hard ceiling; the prompt targets 750-950
 
-# Shipped inside the package; xgp init copies it to the data directory (R33).
+# Shipped inside the package; qc init copies it to the data directory (R33).
 EXAMPLE_PROFILE = "author_profile.example.md"
 
 NOTHING_LOST = "Nothing was saved, so today's topic is still available when you re-run."

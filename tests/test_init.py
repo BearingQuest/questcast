@@ -1,4 +1,4 @@
-"""R33: xgp init creates the data directory and a mode-600 profile, and never
+"""R33: qc init creates the data directory and a mode-600 profile, and never
 overwrites one that exists."""
 
 import stat
@@ -7,9 +7,9 @@ from importlib import resources
 
 import pytest
 
-from xgenerateposts import cli, config
+from questcast import cli, config
 
-EXAMPLE = resources.files("xgenerateposts").joinpath(config.EXAMPLE_PROFILE).read_bytes()
+EXAMPLE = resources.files("questcast").joinpath(config.EXAMPLE_PROFILE).read_bytes()
 
 
 def mode(path):
@@ -17,7 +17,7 @@ def mode(path):
 
 
 def run_init(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["xgp", "init"])
+    monkeypatch.setattr(sys, "argv", ["qc", "init"])
     cli.run()
 
 
@@ -61,7 +61,7 @@ def test_existing_profile_is_left_byte_identical(monkeypatch, tmp_path, capsys):
     before = sorted(p.name for p in tmp_path.iterdir())
 
     with pytest.raises(SystemExit) as exc:
-        monkeypatch.setattr(sys, "argv", ["xgp", "init"])
+        monkeypatch.setattr(sys, "argv", ["qc", "init"])
         cli.main()
 
     assert exc.value.code != 0

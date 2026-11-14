@@ -5,8 +5,8 @@ import json
 
 import pytest
 
+from questcast import config, progress, providers
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
-from xgenerateposts import config, progress, providers
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 TPM = (

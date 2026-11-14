@@ -11,8 +11,8 @@ from datetime import date, datetime
 from importlib import resources
 from pathlib import Path
 
-from xgenerateposts import config
-from xgenerateposts.author_profile import parse_profile
+from questcast import config
+from questcast.author_profile import parse_profile
 
 RUN_VIA = ""  # "provider/model, search source" once main() has chosen them (R13)
 RUN_TOKENS = ""  # " — tokens: …" once the provider has given counts (R53, R59)
@@ -44,8 +44,8 @@ def load_profile(path: Path) -> dict:
     if not path.exists():
         raise SystemExit(
             f"No author profile at {path}\n"
-            "Run 'xgp init' (from a repo clone: 'python daily_post.py init') to create one in "
-            "the data directory, or copy xgenerateposts/author_profile.example.md to that "
+            "Run 'qc init' (from a repo clone: 'python daily_post.py init') to create one in "
+            "the data directory, or copy questcast/author_profile.example.md to that "
             "path. Then fill it in — it is what makes the posts sound like you."
         )
     return parse_profile(path.read_text(), path)
@@ -59,7 +59,7 @@ def create_profile() -> Path:
     A missing data directory is created with mode 700, since it holds the
     profile, drafts and history. An existing one keeps its mode.
     """
-    example = resources.files("xgenerateposts").joinpath(config.EXAMPLE_PROFILE).read_bytes()
+    example = resources.files("questcast").joinpath(config.EXAMPLE_PROFILE).read_bytes()
     data = config.data_dir()
     if not data.exists():
         data.parent.mkdir(parents=True, exist_ok=True)

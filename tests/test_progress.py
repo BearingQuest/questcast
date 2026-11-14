@@ -14,7 +14,7 @@ import urllib.error
 
 import pytest
 
-from xgenerateposts import config, progress
+from questcast import config, progress
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -44,7 +44,7 @@ def fast_ticks(monkeypatch):
 
 
 def ticker_threads():
-    return [t for t in threading.enumerate() if t.name == "xgp-progress"]
+    return [t for t in threading.enumerate() if t.name == "qc-progress"]
 
 
 def wait_for_redraws(stream, count, timeout=5.0):
@@ -145,7 +145,7 @@ def test_progress_is_never_written_to_run_log(fast_ticks):
 
 CHILD = """
 import sys, time
-from xgenerateposts import cli, progress
+from questcast import cli, progress
 
 def run():
     with progress.waiting_for("Groq"):

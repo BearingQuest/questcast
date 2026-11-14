@@ -8,9 +8,9 @@ import sys
 
 import pytest
 
+from questcast import cli, config, prompt, providers
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
 from tests.test_rss import FEED_A, FEED_B, dated, rss
-from xgenerateposts import cli, config, prompt, providers
 
 
 def test_groq_rss_body_sends_low_reasoning_effort_for_gpt_oss():

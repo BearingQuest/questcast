@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from xgenerateposts import config, search, storage
+from questcast import config, search, storage
 
 
 def write(tmp_path, text):
@@ -27,13 +27,13 @@ def test_missing_required_section_exits(tmp_path):
 def test_missing_file_exits(tmp_path):
     with pytest.raises(SystemExit) as exc:
         storage.load_profile(tmp_path / "absent.md")
-    assert "xgp init" in exc.value.code
-    assert "xgenerateposts/author_profile.example.md" in exc.value.code
+    assert "qc init" in exc.value.code
+    assert "questcast/author_profile.example.md" in exc.value.code
 
 
 def test_example_profile_parses():
-    """The packaged example, the one file xgp init copies, parses as a profile."""
-    example = resources.files("xgenerateposts").joinpath(config.EXAMPLE_PROFILE)
+    """The packaged example, the one file qc init copies, parses as a profile."""
+    example = resources.files("questcast").joinpath(config.EXAMPLE_PROFILE)
     profile = storage.load_profile(Path(str(example)))
     assert search.parse_feeds(profile) == [
         "https://blog.example.com/feed.xml",

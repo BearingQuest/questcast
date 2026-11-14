@@ -54,7 +54,7 @@ def status(
             write(CLEAR + tick(monotonic() - began))
 
     write(CLEAR + tick(0.0))
-    ticker = threading.Thread(target=redraw, name="xgp-progress", daemon=True)
+    ticker = threading.Thread(target=redraw, name="qc-progress", daemon=True)
     ticker.start()
     try:
         yield

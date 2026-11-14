@@ -10,7 +10,7 @@ import urllib.response
 
 import pytest
 
-from xgenerateposts import net, progress, storage
+from questcast import net, progress, storage
 
 ENV_VARS = (
     "AI_POST_PROVIDER",

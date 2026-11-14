@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 
 import pytest
 
+from questcast import config, feeds, search
 from tests.test_rss import FEED_A, FEED_B, PROFILE, dated, rss
-from xgenerateposts import config, feeds, search
 
 
 def entry(title, day=None, summary=""):

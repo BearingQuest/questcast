@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from questcast import config, net, providers
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
-from xgenerateposts import config, net, providers
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 

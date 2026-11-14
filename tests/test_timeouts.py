@@ -29,7 +29,7 @@ def test_provider_calls_default_to_120_seconds(web, groq):
 
 
 def test_provider_timeout_is_configurable(monkeypatch, web, groq):
-    monkeypatch.setenv("AI_POST_PROVIDER_TIMEOUT", "30")
+    monkeypatch.setenv("QC_POST_PROVIDER_TIMEOUT", "30")
     web.add(GROQ_URL, completion(MODEL_OUTPUT))
     groq.generate("prompt")
     assert web.requests[0].timeout == 30
@@ -37,10 +37,10 @@ def test_provider_timeout_is_configurable(monkeypatch, web, groq):
 
 @pytest.mark.parametrize("value", ["0", "-5", "soon", "nan", "inf"])
 def test_bad_provider_timeout_exits(monkeypatch, value):
-    monkeypatch.setenv("AI_POST_PROVIDER_TIMEOUT", value)
+    monkeypatch.setenv("QC_POST_PROVIDER_TIMEOUT", value)
     with pytest.raises(SystemExit) as exc:
         config.provider_timeout()
-    assert "AI_POST_PROVIDER_TIMEOUT" in exc.value.code
+    assert "QC_POST_PROVIDER_TIMEOUT" in exc.value.code
 
 
 @pytest.mark.parametrize("error", [TimeoutError(), urllib.error.URLError(TimeoutError())])
@@ -49,4 +49,4 @@ def test_provider_timeout_exits_with_remedy(web, groq, error):
     with pytest.raises(SystemExit) as exc:
         groq.generate("prompt", native_search=True)
     assert "no response within 120 seconds" in exc.value.code
-    assert "AI_POST_PROVIDER_TIMEOUT" in exc.value.code
+    assert "QC_POST_PROVIDER_TIMEOUT" in exc.value.code

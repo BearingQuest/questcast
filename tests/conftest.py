@@ -10,16 +10,10 @@ import urllib.response
 
 import pytest
 
-from questcast import net, progress, storage
+from questcast import config, net, progress, storage
 
 ENV_VARS = (
-    "AI_POST_PROVIDER",
-    "AI_POST_SEARCH",
-    "AI_POST_PROVIDER_TIMEOUT",
-    "AI_POST_RSS_PER_FEED",
-    "AI_POST_RSS_MAX_ENTRIES",
-    "AI_POST_RATE_LIMIT_WAIT",
-    "AI_POST_TOKEN_BUDGET",
+    *(f"{prefix}{name}" for prefix in ("QC_POST_", "AI_POST_") for name in config.SETTING_NAMES),
     "ANTHROPIC_API_KEY",
     "GROQ_API_KEY",
     "GROQ_MODEL",
@@ -41,14 +35,23 @@ def no_network(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def isolated(monkeypatch, tmp_path):
-    """Clean environment and a throwaway data directory for every test."""
+def isolated(monkeypatch, tmp_path, request):
+    """Clean environment and a throwaway data directory for every test.
+
+    Outside tests/acceptance/, HOME is a temporary directory too, so a test can
+    never reach the real home. The acceptance tests build their own child
+    environments, and this fixture leaves them as they were."""
     for var in ENV_VARS:
         monkeypatch.delenv(var, raising=False)
-    # config reads these at call time, so the real ~/XPosts and ~/.ai_post_env
-    # are never touched.
-    monkeypatch.setenv("AI_POST_DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("AI_POST_ENV_FILE", str(tmp_path / "no.env"))
+    # config reads these at call time, so the real ~/QuestCast, ~/XPosts and
+    # the credentials files are never touched.
+    if "acceptance" in request.node.path.parts:
+        monkeypatch.setenv("AI_POST_DATA_DIR", str(tmp_path))
+        monkeypatch.setenv("AI_POST_ENV_FILE", str(tmp_path / "no.env"))
+    else:
+        monkeypatch.setenv("QC_POST_DATA_DIR", str(tmp_path))
+        monkeypatch.setenv("QC_POST_ENV_FILE", str(tmp_path / "no.env"))
+        monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setattr(storage, "RUN_VIA", "")
     monkeypatch.setattr(storage, "RUN_TOKENS", "")
     return tmp_path

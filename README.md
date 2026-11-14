@@ -59,16 +59,16 @@ which block system-wide pip installs per PEP 668. Nothing needs installing for
 the default provider:
 
 ```bash
-python3 -m venv ~/.ai_post_venv
+python3 -m venv ~/.qc_post_venv    # earlier installs: ~/.ai_post_venv still works for now
 # only if you will use --provider anthropic, run from the clone:
-~/.ai_post_venv/bin/pip install -e '.[anthropic]'
+~/.qc_post_venv/bin/pip install -e '.[anthropic]'
 ```
 
 **2. API key**, in a protected file outside the repo:
 
 ```bash
-echo 'export GROQ_API_KEY=gsk_your-full-key' >> ~/.ai_post_env
-chmod 600 ~/.ai_post_env
+echo 'export GROQ_API_KEY=gsk_your-full-key' >> ~/.qc_post_env
+chmod 600 ~/.qc_post_env
 ```
 
 Use `ANTHROPIC_API_KEY` instead (from https://console.anthropic.com/settings/keys)
@@ -82,10 +82,10 @@ the same file double as a shell-sourceable env file.
 fill it in:
 
 ```bash
-~/.ai_post_venv/bin/python daily_post.py init    # installed: qc init
+~/.qc_post_venv/bin/python daily_post.py init    # installed: qc init
 ```
 
-This creates the data directory (`~/XPosts`, or `AI_POST_DATA_DIR`) with mode
+This creates the data directory (`~/QuestCast`, or `QC_POST_DATA_DIR`) with mode
 700 if it doesn't exist, and copies `questcast/author_profile.example.md`
 there as `author_profile.md`, with mode 600. It never overwrites an existing
 profile: if one is there, it says so and exits without changing anything.
@@ -122,7 +122,7 @@ run it:
 # Installed qc command:
 uv tool install --reinstall '.[anthropic]'
 # A repo clone's virtual environment:
-~/.ai_post_venv/bin/pip install -e '.[anthropic]'
+~/.qc_post_venv/bin/pip install -e '.[anthropic]'
 ```
 
 `uv tool install --reinstall` replaces the whole tool environment, so a later
@@ -139,11 +139,11 @@ below 4, and oauthlib 3.3.1 has open advisories fixed only in 4.0.0
 ## Usage
 
 ```bash
-~/.ai_post_venv/bin/python daily_post.py
+~/.qc_post_venv/bin/python daily_post.py
 ```
 
 You get a topic menu, then both drafts print to the terminal and land in
-`~/XPosts/drafts.md`. Review, edit, post them yourself. Run whenever you like —
+`~/QuestCast/drafts.md`. Review, edit, post them yourself. Run whenever you like —
 dedup makes irregular timing safe, and a second run the same day simply picks a
 different item.
 
@@ -155,22 +155,22 @@ different item.
 | `--list-topics` | Show the menu and exit |
 | `--history` | Show the last 10 items used, with their topics |
 | `--profile PATH` | Use a different profile file — handy for running more than one persona |
-| `--provider NAME` | `groq`, `anthropic` or `openai-compat`. Default: `AI_POST_PROVIDER`, else `groq` |
-| `--search SOURCE` | `native` or `rss`. Default: `AI_POST_SEARCH`, else `native` for `groq` and `anthropic`, `rss` for `openai-compat` |
+| `--provider NAME` | `groq`, `anthropic` or `openai-compat`. Default: `QC_POST_PROVIDER`, else `groq` |
+| `--search SOURCE` | `native` or `rss`. Default: `QC_POST_SEARCH`, else `native` for `groq` and `anthropic`, `rss` for `openai-compat` |
 | `--post` | Publish the X version (see below) |
 | `--post-linkedin` | Publish the LinkedIn version (see below) |
 
 For a shorter daily command, keep a wrapper outside the repo, e.g.
-`~/XPosts/aipost.sh`:
+`~/QuestCast/aipost.sh`:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-exec "$HOME/.ai_post_venv/bin/python" "/path/to/daily_post.py" "$@"
+exec "$HOME/.qc_post_venv/bin/python" "/path/to/daily_post.py" "$@"
 ```
 
-`chmod +x` it once, then each day is `~/XPosts/aipost.sh` — and arguments pass
-straight through, so `~/XPosts/aipost.sh --topic kubernetes` works too.
+`chmod +x` it once, then each day is `~/QuestCast/aipost.sh` — and arguments pass
+straight through, so `~/QuestCast/aipost.sh --topic kubernetes` works too.
 
 ### Providers and search
 
@@ -201,32 +201,34 @@ one search call fits its tokens-per-minute limit, is not published. If a
 `--provider groq --search rss` instead: Groq then only writes the posts, from
 your feeds.
 
-Environment variables (set them in `~/.ai_post_env` or the shell; a value already set in
-the shell wins, and `AI_POST_ENV_FILE` works only from the shell):
+Environment variables (set them in `~/.qc_post_env` or the shell; a value already set in
+the shell wins, and `QC_POST_ENV_FILE` works only from the shell). Each
+`QC_POST_*` name also still reads its old `AI_POST_*` name, with a notice on
+stderr; see "Migrating from XGeneratePosts" below:
 
 | Variable | Default | Effect |
 |---|---|---|
-| `AI_POST_PROVIDER` | `groq` | Provider when `--provider` isn't given |
-| `AI_POST_SEARCH` | `native` for `groq` and `anthropic`, `rss` for `openai-compat` | Search source when `--search` isn't given |
+| `QC_POST_PROVIDER` | `groq` | Provider when `--provider` isn't given |
+| `QC_POST_SEARCH` | `native` for `groq` and `anthropic`, `rss` for `openai-compat` | Search source when `--search` isn't given |
 | `GROQ_API_KEY` | none | Groq key, from https://console.groq.com/keys |
 | `GROQ_MODEL` | `openai/gpt-oss-120b` | Groq model |
 | `ANTHROPIC_API_KEY` | none | Anthropic key, for `--provider anthropic` |
 | `OPENAI_COMPAT_BASE_URL` | none | Endpoint up to `/v1`, for `--provider openai-compat` |
 | `OPENAI_COMPAT_MODEL` | none | Model name, for `--provider openai-compat` |
 | `OPENAI_COMPAT_API_KEY` | none | Key for that service; not needed for local Ollama |
-| `AI_POST_PROVIDER_TIMEOUT` | `120` | Seconds to wait for a response. Applies to `groq` and `openai-compat` only; `anthropic` keeps its SDK's own timeout. Feed requests always time out after 15 seconds |
-| `AI_POST_RSS_PER_FEED` | `3` | Newest entries taken from each feed with `--search rss` |
-| `AI_POST_RSS_MAX_ENTRIES` | `20` | Most candidates sent to the model with `--search rss`, after the per-feed cap. Entries matching more of the topic's words go first, then newer ones. Lower it if Groq returns 413 |
-| `AI_POST_TOKEN_BUDGET` | `7000` | Most estimated prompt tokens with `--search rss`. The lowest-ranked entries are dropped until the prompt fits, after the `AI_POST_RSS_MAX_ENTRIES` cap. See "Rate limits and progress" below |
-| `AI_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
-| `AI_POST_DATA_DIR` | `~/XPosts` | Where the profile, drafts, history and run log live |
-| `AI_POST_ENV_FILE` | `~/.ai_post_env` | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
+| `QC_POST_PROVIDER_TIMEOUT` | `120` | Seconds to wait for a response. Applies to `groq` and `openai-compat` only; `anthropic` keeps its SDK's own timeout. Feed requests always time out after 15 seconds |
+| `QC_POST_RSS_PER_FEED` | `3` | Newest entries taken from each feed with `--search rss` |
+| `QC_POST_RSS_MAX_ENTRIES` | `20` | Most candidates sent to the model with `--search rss`, after the per-feed cap. Entries matching more of the topic's words go first, then newer ones. Lower it if Groq returns 413 |
+| `QC_POST_TOKEN_BUDGET` | `7000` | Most estimated prompt tokens with `--search rss`. The lowest-ranked entries are dropped until the prompt fits, after the `QC_POST_RSS_MAX_ENTRIES` cap. See "Rate limits and progress" below |
+| `QC_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
+| `QC_POST_DATA_DIR` | `~/QuestCast` (`~/XPosts` if that is all you have) | Where the profile, drafts, history and run log live |
+| `QC_POST_ENV_FILE` | `~/.qc_post_env` (`~/.ai_post_env` if that is all you have) | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
 
 ### Rate limits and progress
 
 Groq's free plan allows 8,000 tokens a minute. A run that hits that limit
 gets HTTP 429 with a suggested wait. If the wait is at most
-`AI_POST_RATE_LIMIT_WAIT` seconds (default 60), the run counts it down on
+`QC_POST_RATE_LIMIT_WAIT` seconds (default 60), the run counts it down on
 the terminal, for example "Groq's per-minute token limit: retrying in 27 s
 (Ctrl+C to cancel)", and then sends the same request once more. A second
 429, a longer wait (a daily limit, say) or no suggested wait stops with the
@@ -241,7 +243,7 @@ goes to stderr only, never to `run.log`.
 
 With `--search rss`, the run estimates the size of the whole prompt (UTF-8
 bytes divided by 4, which tends to over-count a little) and drops the
-lowest-ranked feed entries until it is within `AI_POST_TOKEN_BUDGET`. It
+lowest-ranked feed entries until it is within `QC_POST_TOKEN_BUDGET`. It
 says so when it does, for example "Sending 6 of 20 feed entries to fit the
 token budget". The profile's Beat, Voice, Experience, Never and Hashtags
 sections go into every prompt, so a long profile leaves room for fewer
@@ -262,12 +264,12 @@ happens again, send that line.
 ### Optional: publishing to X
 
 ```bash
-~/.ai_post_venv/bin/pip install tweepy
-~/.ai_post_venv/bin/python daily_post.py --post
+~/.qc_post_venv/bin/pip install tweepy
+~/.qc_post_venv/bin/python daily_post.py --post
 ```
 
 Needs an X developer app set to **Read and Write** and four user-context
-credentials in `~/.ai_post_env`. A Bearer token alone is app-only auth and
+credentials in `~/.qc_post_env`. A Bearer token alone is app-only auth and
 cannot post:
 
 ```bash
@@ -300,7 +302,7 @@ Unattended runs need a topic, since there is no terminal to ask on — the scrip
 says so rather than hanging:
 
 ```cron
-0 8 * * * $HOME/.ai_post_venv/bin/python /path/to/daily_post.py --random-topic >> $HOME/XPosts/cron.log 2>&1
+0 8 * * * $HOME/.qc_post_venv/bin/python /path/to/daily_post.py --random-topic >> $HOME/QuestCast/cron.log 2>&1
 ```
 
 Env-file loading means no key handling in the crontab. On laptops that sleep,
@@ -320,8 +322,8 @@ In the repo:
 | `tests/` | Unit and acceptance tests, run with `make check`; no network needed |
 | `docs/decisions.md` | Owner decisions and recorded departures |
 
-In your data directory (`~/XPosts` by default, override with
-`AI_POST_DATA_DIR`):
+In your data directory (`~/QuestCast` by default, override with
+`QC_POST_DATA_DIR`):
 
 | File | Purpose |
 |---|---|
@@ -392,10 +394,49 @@ was never given. Capping references at one per post and forbidding anything
 outside the list is what keeps the output honest — and it matters more once
 topics vary, since some days will land outside your deepest expertise.
 
+## Migrating from XGeneratePosts
+
+QuestCast was XGeneratePosts. The configuration names changed with it, and the
+old ones keep working, with a one-line notice on stderr, until the next
+release removes them. Nothing is moved for you. Run these once:
+
+```bash
+# 0. find anything scheduled that still uses the old paths, and update it after step 1
+crontab -l 2>/dev/null | grep -n 'XPosts\|aipost\|AI_POST_'
+grep -rl 'XPosts\|aipost\|AI_POST_' ~/Library/LaunchAgents 2>/dev/null
+
+# 1. the data folder; refuses if ~/QuestCast already exists, because mv would nest it
+if [ -e ~/QuestCast ]; then echo "~/QuestCast already exists: stop and merge by hand"; else mv ~/XPosts ~/QuestCast; fi
+
+# 2. the key file; -n never overwrites an existing file, and mv keeps its mode
+mv -n ~/.ai_post_env ~/.qc_post_env
+ls -l ~/.qc_post_env ~/.ai_post_env 2>&1   # new file shows -rw-------; old one should be gone
+```
+
+Scripts kept in the data folder (such as a wrapper) move with it; update any paths and AI_POST_ names inside them, and in any cron or LaunchAgent entry found in step 0.
+
+3. In your shell profile (and any cron or wrapper script), rename `AI_POST_` to
+   `QC_POST_`, for example `AI_POST_PROVIDER` to `QC_POST_PROVIDER`. Do the same
+   inside the key file if you set any there.
+4. If you made a clone-path venv, recreate it as `~/.qc_post_venv` (step 1 of
+   Setup). The old `~/.ai_post_venv` can then be deleted.
+
+How the old names are treated until then:
+
+- If `QC_POST_X` is set it wins, and `AI_POST_X` is ignored with a notice.
+  Otherwise `AI_POST_X` is used, with a notice. This holds for names set in the
+  key file too.
+- If `~/QuestCast` exists it is used and `~/XPosts` is not touched; otherwise
+  `~/XPosts` is used if it exists. The key file works the same way
+  (`~/.qc_post_env`, then `~/.ai_post_env`).
+- `qc init` creates `~/QuestCast` only when neither folder exists.
+- Notices name paths and variables, never values, and are not written to
+  `drafts.md`, `history.json` or `run.log`.
+
 ## Security notes
 
 - API keys live in a `chmod 600` file in your home directory, never in the
-  repo. `.gitignore` also excludes `.ai_post_env`, `*.env`, your profile, and
+  repo. `.gitignore` also excludes `.qc_post_env`, `.ai_post_env`, `*.env`, your profile, and
   all generated output. Error messages name the variable, never its value.
 - Before any public push: `grep -riE "sk-ant|gsk_" .` should return nothing
   except placeholders: the examples in this README and the script, and the

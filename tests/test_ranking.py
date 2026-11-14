@@ -98,7 +98,7 @@ def test_default_total_cap_is_20():
 
 
 def test_total_cap_applies_after_per_feed_cap(monkeypatch, web):
-    monkeypatch.setenv("AI_POST_RSS_MAX_ENTRIES", "4")
+    monkeypatch.setenv("QC_POST_RSS_MAX_ENTRIES", "4")
     web.add(FEED_A, rss(*[(f"A{n}", f"https://a.example/{n}", dated(n)) for n in range(10, 15)]))
     web.add(
         FEED_B,
@@ -125,14 +125,14 @@ def test_total_cap_applies_after_per_feed_cap(monkeypatch, web):
 
 @pytest.mark.parametrize("value", ["0", "-1", "abc", "2.5"])
 def test_bad_total_cap_exits(monkeypatch, value):
-    monkeypatch.setenv("AI_POST_RSS_MAX_ENTRIES", value)
+    monkeypatch.setenv("QC_POST_RSS_MAX_ENTRIES", value)
     with pytest.raises(SystemExit) as exc:
         config.rss_max_entries()
-    assert "AI_POST_RSS_MAX_ENTRIES must be a whole number of 1 or more" in exc.value.code
+    assert "QC_POST_RSS_MAX_ENTRIES must be a whole number of 1 or more" in exc.value.code
 
 
 def test_bad_total_cap_exits_before_fetching(monkeypatch, web):
-    monkeypatch.setenv("AI_POST_RSS_MAX_ENTRIES", "0")
+    monkeypatch.setenv("QC_POST_RSS_MAX_ENTRIES", "0")
     with pytest.raises(SystemExit):
         search.RssSearch(PROFILE)
     assert web.requests == []

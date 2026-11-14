@@ -30,12 +30,12 @@ from questcast.storage import warn
 
 
 def select_search(flag: str | None, provider_name: str) -> str:
-    """--search, then AI_POST_SEARCH, then the provider's default (R6)."""
+    """--search, then QC_POST_SEARCH, then the provider's default (R6)."""
     default = "native" if provider_name in NATIVE_SEARCH_PROVIDERS else "rss"
     name = (flag or config.search_setting() or default).strip().lower()
     if name not in SEARCH_SOURCES:
         raise SystemExit(
-            f"\nUnknown search source {name!r} (from AI_POST_SEARCH). "
+            f"\nUnknown search source {name!r} (from QC_POST_SEARCH). "
             f"Choose one of: {', '.join(SEARCH_SOURCES)}.\n"
         )
     if name == "native" and provider_name not in NATIVE_SEARCH_PROVIDERS:
@@ -144,7 +144,7 @@ class RssSearch:
 
     def fit_budget(self, build: Callable[[str], str]) -> str:
         """Drop the lowest-ranked candidates until the estimate of the whole
-        prompt, `build(block)`, is within AI_POST_TOKEN_BUDGET (R53). Returns
+        prompt, `build(block)`, is within QC_POST_TOKEN_BUDGET (R53). Returns
         the block to send; `sent` and `links` match it."""
         budget = config.token_budget()
         kept = list(self.picked)
@@ -155,10 +155,10 @@ class RssSearch:
             size = sum(len(self.profile.get(k, "")) for k in PROMPT_SECTIONS)
             raise SystemExit(
                 f"\nThe prompt is about {base:,} tokens before any feed entry, so not even\n"
-                f"  one entry fits in AI_POST_TOKEN_BUDGET ({budget:,}). Your author profile's\n"
+                f"  one entry fits in QC_POST_TOKEN_BUDGET ({budget:,}). Your author profile's\n"
                 f"  Beat, Voice, Experience, Never and Hashtags sections, which go into\n"
                 f"  every prompt, come to {size:,} characters.\n\n"
-                "  Shorten those sections, or raise AI_POST_TOKEN_BUDGET if your\n"
+                "  Shorten those sections, or raise QC_POST_TOKEN_BUDGET if your\n"
                 f"  provider's limit allows it.\n\n  {NOTHING_LOST}\n"
             )
         self.sent = kept

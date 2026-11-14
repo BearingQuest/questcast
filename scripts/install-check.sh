@@ -11,12 +11,12 @@ uv build
 uv venv --quiet "$tmp/venv"
 uv pip install --quiet --python "$tmp/venv/bin/python" dist/*.whl
 
-export HOME="$tmp/home" AI_POST_DATA_DIR="$tmp/data"
+export HOME="$tmp/home" QC_POST_DATA_DIR="$tmp/data"
 mkdir "$HOME"
 qc="$tmp/venv/bin/qc"
 xgp="$tmp/venv/bin/xgp"
 python="$tmp/venv/bin/python"
-profile="$AI_POST_DATA_DIR/author_profile.md"
+profile="$QC_POST_DATA_DIR/author_profile.md"
 
 # R49: the wheel's METADATA declares each extra in pyproject.toml with its exact
 # pin. This reads the metadata only; the extras are not installed.
@@ -51,7 +51,7 @@ print(mode, digest)
 "$xgp" --help
 "$qc" init
 
-read -r dir_mode _ <<<"$(inspect "$AI_POST_DATA_DIR")"
+read -r dir_mode _ <<<"$(inspect "$QC_POST_DATA_DIR")"
 echo "data directory mode: $dir_mode"
 [ "$dir_mode" = 0o700 ] || { echo "::error::new data directory mode is $dir_mode, not 0o700"; exit 1; }
 

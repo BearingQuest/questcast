@@ -126,9 +126,11 @@ def generate_item(
 
 def run() -> None:
     """One run: parse the flags, then draft (and optionally publish)."""
-    # Loaded first, so AI_POST_DATA_DIR set in the env file applies to the
+    # Loaded first, so QC_POST_DATA_DIR set in the env file applies to the
     # --profile default as well as to the history, drafts and run log.
     config.load_env_file()
+    for notice in config.legacy_notices():
+        print(notice, file=sys.stderr)
 
     parser = argparse.ArgumentParser(
         description="Daily X and LinkedIn draft generator, driven by an "
@@ -151,12 +153,12 @@ def run() -> None:
     parser.add_argument(
         "--provider",
         choices=PROVIDERS,
-        help=f"LLM provider (default: AI_POST_PROVIDER, else {DEFAULT_PROVIDER})",
+        help=f"LLM provider (default: QC_POST_PROVIDER, else {DEFAULT_PROVIDER})",
     )
     parser.add_argument(
         "--search",
         choices=SEARCH_SOURCES,
-        help="where the item comes from (default: AI_POST_SEARCH, else native for "
+        help="where the item comes from (default: QC_POST_SEARCH, else native for "
         "anthropic and groq, rss for openai-compat)",
     )
     parser.add_argument(
@@ -265,7 +267,7 @@ def init() -> None:
     print(
         f"Created {path} from the example profile (mode 600).\n"
         "Fill in at least ## Beat and ## Voice, then add GROQ_API_KEY to "
-        f"{config.env_file()} (see the README)."
+        f"{config.shown(config.env_file())} (see the README)."
     )
 
 

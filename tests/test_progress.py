@@ -167,7 +167,7 @@ def test_ctrl_c_on_a_real_terminal_cancels_and_leaves_the_line_clean(tmp_path):
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=slave,
-        env={**os.environ, "AI_POST_DATA_DIR": str(tmp_path)},
+        env={**os.environ, "QC_POST_DATA_DIR": str(tmp_path)},
     )
     # The parent keeps its copy of the slave open until the output is read:
     # macOS drops unread pty output once every slave descriptor is closed.

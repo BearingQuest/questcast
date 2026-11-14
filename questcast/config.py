@@ -6,6 +6,7 @@ set them per test and the env file can be loaded first.
 
 import math
 import os
+import re
 from pathlib import Path
 
 MODEL = "claude-sonnet-4-6"
@@ -22,10 +23,10 @@ GROQ_KEYS = "https://console.groq.com/keys"
 
 # Server-side search can take a minute or more, so provider calls get a long
 # timeout. Applies to groq and openai-compat; the anthropic SDK keeps its own.
-DEFAULT_PROVIDER_TIMEOUT = 120.0  # seconds, override with AI_POST_PROVIDER_TIMEOUT
+DEFAULT_PROVIDER_TIMEOUT = 120.0  # seconds, override with QC_POST_PROVIDER_TIMEOUT
 
 # R51: on a 429, wait the provider's suggested time plus a margin and retry
-# once, if the suggestion is at most AI_POST_RATE_LIMIT_WAIT (0 turns it off).
+# once, if the suggestion is at most QC_POST_RATE_LIMIT_WAIT (0 turns it off).
 DEFAULT_RATE_LIMIT_WAIT = 60  # seconds
 RATE_LIMIT_MARGIN = 1.0  # seconds added to the provider's suggestion
 
@@ -39,12 +40,12 @@ SEARCH_SOURCES = ("native", "rss")
 NATIVE_SEARCH_PROVIDERS = ("anthropic", "groq")  # default to native; others to rss
 FEED_TIMEOUT = 15.0  # seconds per feed request (R20)
 LINKEDIN_TIMEOUT = 30.0  # seconds for the one --post-linkedin request (R56)
-DEFAULT_RSS_PER_FEED = 3  # newest entries per feed, override with AI_POST_RSS_PER_FEED
+DEFAULT_RSS_PER_FEED = 3  # newest entries per feed, override with QC_POST_RSS_PER_FEED
 # Total candidates sent, best topic match first, override with
-# AI_POST_RSS_MAX_ENTRIES. Keeps one call under Groq's free 8,000 TPM (R22).
+# QC_POST_RSS_MAX_ENTRIES. Keeps one call under Groq's free 8,000 TPM (R22).
 DEFAULT_RSS_MAX_ENTRIES = 20
 # R53: with --search rss, the lowest-ranked candidates are dropped until the
-# whole prompt's estimated size is within AI_POST_TOKEN_BUDGET. 7,000 leaves
+# whole prompt's estimated size is within QC_POST_TOKEN_BUDGET. 7,000 leaves
 # 1,000 of Groq's free 8,000 tokens per minute for the chat template and for
 # text that tokenizes denser than the estimate. The arithmetic is in
 # docs/decisions.md.
@@ -68,9 +69,47 @@ EXAMPLE_PROFILE = "author_profile.example.md"
 
 NOTHING_LOST = "Nothing was saved, so today's topic is still available when you re-run."
 
-# The env file can't name its own location, so AI_POST_ENV_FILE comes only
-# from the process environment. Everything else may be set in the file.
-PROCESS_ONLY = ("AI_POST_ENV_FILE",)
+# The env file can't name its own location, so QC_POST_ENV_FILE (and the old
+# AI_POST_ENV_FILE) come only from the process environment. Everything else
+# may be set in the file.
+PROCESS_ONLY = ("QC_POST_ENV_FILE", "AI_POST_ENV_FILE")
+
+# Settings renamed from AI_POST_<NAME> to QC_POST_<NAME>. The old names are read
+# as fallbacks for one release, with a notice on stderr (legacy_notices).
+NEW_PREFIX = "QC_POST_"
+OLD_PREFIX = "AI_POST_"
+SETTING_NAMES = (
+    "PROVIDER",
+    "SEARCH",
+    "PROVIDER_TIMEOUT",
+    "RATE_LIMIT_WAIT",
+    "RSS_PER_FEED",
+    "RSS_MAX_ENTRIES",
+    "TOKEN_BUDGET",
+    "DATA_DIR",
+    "ENV_FILE",
+)
+
+CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]+")
+
+
+def setting(name: str) -> str | None:
+    """QC_POST_<name> if set (even to an empty value), else AI_POST_<name>,
+    else None."""
+    new = NEW_PREFIX + name
+    if new in os.environ:
+        return os.environ[new]
+    return os.environ.get(OLD_PREFIX + name)
+
+
+def shown(path: Path) -> str:
+    """A path fit for one line of output: the home directory as ~, and no
+    control characters."""
+    text = str(path)
+    home = str(Path.home())
+    if text == home or text.startswith(home + os.sep):
+        text = "~" + text[len(home) :]
+    return CONTROL_CHARS.sub(" ", text)
 
 
 # ---------------------------------------------------------------------------
@@ -78,12 +117,83 @@ PROCESS_ONLY = ("AI_POST_ENV_FILE",)
 # ---------------------------------------------------------------------------
 
 
+def _override(name: str) -> Path | None:
+    value = setting(name)
+    return None if value is None else Path(value)
+
+
+def _default_pair(new: str, old: str) -> tuple[Path, Path]:
+    return Path.home() / new, Path.home() / old
+
+
 def env_file() -> Path:
-    return Path(os.environ.get("AI_POST_ENV_FILE", Path.home() / ".ai_post_env"))
+    """QC_POST_ENV_FILE, AI_POST_ENV_FILE, ~/.qc_post_env if it exists,
+    ~/.ai_post_env if it exists, else ~/.qc_post_env. Only exists() is called,
+    so the old file is never opened while the new one is there."""
+    override = _override("ENV_FILE")
+    if override is not None:
+        return override
+    new, old = _default_pair(".qc_post_env", ".ai_post_env")
+    if not new.exists() and old.exists():
+        return old
+    return new
 
 
 def data_dir() -> Path:
-    return Path(os.environ.get("AI_POST_DATA_DIR", Path.home() / "XPosts"))
+    """QC_POST_DATA_DIR, AI_POST_DATA_DIR, ~/QuestCast if it exists, ~/XPosts
+    if it exists, else ~/QuestCast. Nothing is created, moved or deleted."""
+    override = _override("DATA_DIR")
+    if override is not None:
+        return override
+    new, old = _default_pair("QuestCast", "XPosts")
+    if not new.exists() and old.exists():
+        return old
+    return new
+
+
+def legacy_notices() -> list[str]:
+    """One stderr line per old name still in use or ignored: names and paths
+    only, never values. Printed once per run by cli.run, and never written to
+    drafts.md, history.json or run.log."""
+    lines = []
+    deprecated = []
+    ignored = []
+    for name in SETTING_NAMES:
+        old_set = OLD_PREFIX + name in os.environ
+        if old_set and NEW_PREFIX + name in os.environ:
+            ignored.append(OLD_PREFIX + name)
+        elif old_set:
+            deprecated.append(OLD_PREFIX + name)
+    if deprecated:
+        many = len(deprecated) > 1
+        lines.append(
+            f"questcast: {', '.join(deprecated)} {'are' if many else 'is'} deprecated; "
+            f"rename {'them' if many else 'it'} to QC_POST_*. "
+            "Old names stop working after the next release."
+        )
+    for old_name in ignored:
+        new_name = NEW_PREFIX + old_name[len(OLD_PREFIX) :]
+        lines.append(f"questcast: {old_name} is ignored because {new_name} is set")
+    for override, new, old in (
+        ("ENV_FILE", ".qc_post_env", ".ai_post_env"),
+        ("DATA_DIR", "QuestCast", "XPosts"),
+    ):
+        if setting(override) is not None:
+            continue  # a variable chose the path, so the default files don't matter
+        new_path, old_path = _default_pair(new, old)
+        if not old_path.exists():
+            continue
+        if new_path.exists():
+            lines.append(
+                f"questcast: {shown(old_path)} is ignored because {shown(new_path)} exists"
+            )
+        else:
+            verb = "rename it" if override == "ENV_FILE" else "move it"
+            lines.append(
+                f"questcast: using {shown(old_path)}; {verb} with: "
+                f"mv {shown(old_path)} {shown(new_path)}"
+            )
+    return lines
 
 
 def profile_file() -> Path:
@@ -127,16 +237,16 @@ def load_env_file(path: Path | None = None) -> None:
 
 
 def provider_setting() -> str:
-    return os.environ.get("AI_POST_PROVIDER", "")
+    return setting("PROVIDER") or ""
 
 
 def search_setting() -> str:
-    return os.environ.get("AI_POST_SEARCH", "")
+    return setting("SEARCH") or ""
 
 
 def provider_timeout() -> float:
     """Seconds to wait for a groq or openai-compat response (R20)."""
-    raw = os.environ.get("AI_POST_PROVIDER_TIMEOUT", "").strip()
+    raw = (setting("PROVIDER_TIMEOUT") or "").strip()
     if not raw:
         return DEFAULT_PROVIDER_TIMEOUT
     try:
@@ -145,7 +255,7 @@ def provider_timeout() -> float:
         value = -1.0
     if not math.isfinite(value) or value <= 0:
         raise SystemExit(
-            f"\nAI_POST_PROVIDER_TIMEOUT must be a positive number of seconds; got {raw!r}.\n"
+            f"\nQC_POST_PROVIDER_TIMEOUT must be a positive number of seconds; got {raw!r}.\n"
             f"  Remove it to use the default of {DEFAULT_PROVIDER_TIMEOUT:g} seconds.\n"
         )
     return value
@@ -153,19 +263,20 @@ def provider_timeout() -> float:
 
 def rate_limit_wait() -> int:
     """Longest suggested wait, in seconds, that a 429 is retried after (R51)."""
-    raw = os.environ.get("AI_POST_RATE_LIMIT_WAIT", "").strip()
+    raw = (setting("RATE_LIMIT_WAIT") or "").strip()
     if not raw:
         return DEFAULT_RATE_LIMIT_WAIT
     if not (raw.isascii() and raw.isdigit()):
         raise SystemExit(
-            "\nAI_POST_RATE_LIMIT_WAIT must be a whole number of seconds, 0 or more\n"
+            "\nQC_POST_RATE_LIMIT_WAIT must be a whole number of seconds, 0 or more\n"
             f"  (0 turns the retry off); got {raw!r}.\n"
         )
     return int(raw)
 
 
-def env_whole_number(var: str, default: int) -> int:
-    raw = os.environ.get(var, "").strip()
+def env_whole_number(name: str, default: int) -> int:
+    var = NEW_PREFIX + name
+    raw = (setting(name) or "").strip()
     if not raw:
         return default
     if not raw.isdigit() or int(raw) < 1:
@@ -174,15 +285,15 @@ def env_whole_number(var: str, default: int) -> int:
 
 
 def rss_per_feed() -> int:
-    return env_whole_number("AI_POST_RSS_PER_FEED", DEFAULT_RSS_PER_FEED)
+    return env_whole_number("RSS_PER_FEED", DEFAULT_RSS_PER_FEED)
 
 
 def rss_max_entries() -> int:
-    return env_whole_number("AI_POST_RSS_MAX_ENTRIES", DEFAULT_RSS_MAX_ENTRIES)
+    return env_whole_number("RSS_MAX_ENTRIES", DEFAULT_RSS_MAX_ENTRIES)
 
 
 def token_budget() -> int:
-    return env_whole_number("AI_POST_TOKEN_BUDGET", DEFAULT_TOKEN_BUDGET)
+    return env_whole_number("TOKEN_BUDGET", DEFAULT_TOKEN_BUDGET)
 
 
 # ---------------------------------------------------------------------------

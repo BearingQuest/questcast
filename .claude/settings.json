@@ -53,7 +53,8 @@
       "Bash(rm -fR *)",
       "Edit(/tests/acceptance/**)",
       "Edit(/.claude/settings.json)",
-      "Read(~/.ai_post_env)"
+      "Read(~/.ai_post_env)",
+      "Read(~/.qc_post_env)"
     ],
     "ask": [
       "Bash(git push *)",
@@ -66,7 +67,9 @@
       "Bash(gh * api)",
       "Bash(gh * api *)",
       "Bash(python3 *)",
-      "Bash(*.ai_post_env*)"
+      "Bash(python *)",
+      "Bash(*.ai_post_env*)",
+      "Bash(*.qc_post_env*)"
     ]
   }
 }

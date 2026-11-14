@@ -10,20 +10,20 @@ def test_provider_defaults_to_groq():
 
 
 def test_provider_env_beats_default(monkeypatch):
-    monkeypatch.setenv("AI_POST_PROVIDER", "Anthropic")
+    monkeypatch.setenv("QC_POST_PROVIDER", "Anthropic")
     assert providers.select_provider(None) == "anthropic"
 
 
 def test_provider_flag_beats_env(monkeypatch):
-    monkeypatch.setenv("AI_POST_PROVIDER", "anthropic")
+    monkeypatch.setenv("QC_POST_PROVIDER", "anthropic")
     assert providers.select_provider("openai-compat") == "openai-compat"
 
 
 def test_unknown_provider_from_env_exits(monkeypatch):
-    monkeypatch.setenv("AI_POST_PROVIDER", "gemini")
+    monkeypatch.setenv("QC_POST_PROVIDER", "gemini")
     with pytest.raises(SystemExit) as exc:
         providers.select_provider(None)
-    assert "AI_POST_PROVIDER" in exc.value.code
+    assert "QC_POST_PROVIDER" in exc.value.code
 
 
 def test_groq_model_default_and_override(monkeypatch):
@@ -41,12 +41,12 @@ def test_search_defaults_by_provider(provider, expected):
 
 
 def test_search_env_beats_provider_default(monkeypatch):
-    monkeypatch.setenv("AI_POST_SEARCH", "rss")
+    monkeypatch.setenv("QC_POST_SEARCH", "rss")
     assert search.select_search(None, "groq") == "rss"
 
 
 def test_search_flag_beats_env(monkeypatch):
-    monkeypatch.setenv("AI_POST_SEARCH", "rss")
+    monkeypatch.setenv("QC_POST_SEARCH", "rss")
     assert search.select_search("native", "groq") == "native"
 
 
@@ -57,7 +57,7 @@ def test_native_search_refused_for_openai_compat():
 
 
 def test_unknown_search_from_env_exits(monkeypatch):
-    monkeypatch.setenv("AI_POST_SEARCH", "bing")
+    monkeypatch.setenv("QC_POST_SEARCH", "bing")
     with pytest.raises(SystemExit):
         search.select_search(None, "groq")
 

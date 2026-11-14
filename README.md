@@ -401,13 +401,19 @@ old ones keep working, with a one-line notice on stderr, until the next
 release removes them. Nothing is moved for you. Run these once:
 
 ```bash
-# 1. the data folder (profile, drafts, history, run log)
-mv ~/XPosts ~/QuestCast
+# 0. find anything scheduled that still uses the old paths, and update it after step 1
+crontab -l 2>/dev/null | grep -n 'XPosts\|aipost\|AI_POST_'
+grep -rl 'XPosts\|aipost\|AI_POST_' ~/Library/LaunchAgents 2>/dev/null
 
-# 2. the key file; mv keeps its mode
-mv ~/.ai_post_env ~/.qc_post_env
-ls -l ~/.qc_post_env        # confirm it still shows -rw-------
+# 1. the data folder; refuses if ~/QuestCast already exists, because mv would nest it
+if [ -e ~/QuestCast ]; then echo "~/QuestCast already exists: stop and merge by hand"; else mv ~/XPosts ~/QuestCast; fi
+
+# 2. the key file; -n never overwrites an existing file, and mv keeps its mode
+mv -n ~/.ai_post_env ~/.qc_post_env
+ls -l ~/.qc_post_env ~/.ai_post_env 2>&1   # new file shows -rw-------; old one should be gone
 ```
+
+Scripts kept in the data folder (such as a wrapper) move with it; update any paths and AI_POST_ names inside them, and in any cron or LaunchAgent entry found in step 0.
 
 3. In your shell profile (and any cron or wrapper script), rename `AI_POST_` to
    `QC_POST_`, for example `AI_POST_PROVIDER` to `QC_POST_PROVIDER`. Do the same

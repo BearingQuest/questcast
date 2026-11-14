@@ -4,7 +4,7 @@ import json
 import urllib.error
 import urllib.request
 
-from xgenerateposts import config, net
+from questcast import config, net
 
 MAYBE_POSTED = (
     "  LinkedIn may have published the post before this failed; check your\n"

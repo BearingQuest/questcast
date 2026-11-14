@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from xgenerateposts import author_profile, cli
+from questcast import author_profile, cli
 
 TOPICS = ["Cloud infrastructure", "Cloud cost", "Security"]
 

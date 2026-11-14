@@ -2,8 +2,8 @@
 
 import pytest
 
+from questcast import cli, dedup, search
 from tests.conftest import MODEL_OUTPUT
-from xgenerateposts import cli, dedup, search
 
 
 class CannedProvider:

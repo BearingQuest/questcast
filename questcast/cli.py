@@ -6,9 +6,9 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from xgenerateposts import config, storage
-from xgenerateposts.author_profile import match_topic, topic_menu
-from xgenerateposts.config import (
+from questcast import config, storage
+from questcast.author_profile import match_topic, topic_menu
+from questcast.config import (
     DEFAULT_PROVIDER,
     MAX_LINKEDIN_TEXT,
     MAX_TWEET_TEXT,
@@ -16,13 +16,13 @@ from xgenerateposts.config import (
     PROVIDERS,
     SEARCH_SOURCES,
 )
-from xgenerateposts.dedup import is_used, used_from
-from xgenerateposts.fields import compose_posts, parse_fields, trim
-from xgenerateposts.prompt import build_prompt, estimate_tokens
-from xgenerateposts.providers import make_provider, select_provider
-from xgenerateposts.publish import post_to_linkedin, post_to_x
-from xgenerateposts.search import make_search, select_search
-from xgenerateposts.storage import load_history, load_profile, log_drafts, log_run, save_history
+from questcast.dedup import is_used, used_from
+from questcast.fields import compose_posts, parse_fields, trim
+from questcast.prompt import build_prompt, estimate_tokens
+from questcast.providers import make_provider, select_provider
+from questcast.publish import post_to_linkedin, post_to_x
+from questcast.search import make_search, select_search
+from questcast.storage import load_history, load_profile, log_drafts, log_run, save_history
 
 
 def choose_topic(topics: list, requested: str | None = None, pick_random: bool = False) -> str:
@@ -248,7 +248,7 @@ def run() -> None:
 
 
 def init() -> None:
-    """xgp init: create the data directory and an author profile to fill in.
+    """qc init: create the data directory and an author profile to fill in.
 
     An existing profile is never touched, and nothing is written to run.log,
     so a refused init changes nothing in the data directory.
@@ -258,7 +258,7 @@ def init() -> None:
     except FileExistsError:
         print(
             f"An author profile already exists at {config.profile_file()}; "
-            "xgp init left it unchanged.",
+            "qc init left it unchanged.",
             file=sys.stderr,
         )
         raise SystemExit(1) from None
@@ -270,7 +270,7 @@ def init() -> None:
 
 
 def main() -> None:
-    """Entry point for xgp and daily_post.py."""
+    """Entry point for qc and daily_post.py."""
     try:
         run()
     except KeyboardInterrupt:
@@ -287,3 +287,12 @@ def main() -> None:
         # that is the useful artifact for an unknown bug.
         log_run(f"FAILED — {type(exc).__name__}: {exc}{storage.RUN_TOKENS}")
         raise
+
+
+XGP_NOTICE = "xgp is now qc; xgp will be removed after the next release"
+
+
+def xgp_main() -> None:
+    """Entry point for the old xgp command: one notice on stderr, then exactly qc."""
+    print(XGP_NOTICE, file=sys.stderr)
+    main()

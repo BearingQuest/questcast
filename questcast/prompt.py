@@ -4,13 +4,13 @@ No I/O."""
 import math
 from datetime import date
 
-from xgenerateposts.config import (
+from questcast.config import (
     BYTES_PER_TOKEN,
     MAX_LINKEDIN_TEXT,
     MAX_TWEET_TEXT,
     PROMPT_USED_LIMIT,
 )
-from xgenerateposts.feeds import clean_text
+from questcast.feeds import clean_text
 
 X_RULES = """
 X/Twitter post rules:

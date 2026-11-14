@@ -3,7 +3,7 @@
 import os
 import sys
 
-from xgenerateposts import cli, config
+from questcast import cli, config
 
 
 def test_data_dir_set_only_in_the_env_file_is_honored(monkeypatch, tmp_path, capsys):

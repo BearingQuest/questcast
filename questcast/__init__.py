@@ -1,5 +1,5 @@
 """
-XGeneratePosts
+QuestCast
 
 Picks a technology topic, finds one noteworthy recent item on it, and drafts
 two posts from that same source:
@@ -12,7 +12,7 @@ The menu comes from the '## Topics' section of your author profile if you
 have one, otherwise from TOPIC_CATALOG below.
 
 What makes the posts sound like YOU is an author profile file kept outside
-this repo (default: ~/XPosts/author_profile.md). `xgp init` copies the
+this repo (default: ~/XPosts/author_profile.md). `qc init` copies the
 scaffold, author_profile.example.md in this package, there to fill in.
 
 Default behavior is draft-only: both posts are printed and appended to
@@ -28,7 +28,7 @@ The model comes from one of three providers (--provider, default groq):
 Requirements:
     Python standard library only for groq and openai-compat.
     The 'anthropic' extra        (only for --provider anthropic)
-    Installed xgp, from the clone:  uv tool install --reinstall '.[anthropic]'
+    Installed qc, from the clone:  uv tool install --reinstall '.[anthropic]'
     The clone's venv:               ~/.ai_post_venv/bin/pip install -e '.[anthropic]'
     The pinned version is in pyproject.toml.
     pip install tweepy           (only for --post; the clone's venv only)

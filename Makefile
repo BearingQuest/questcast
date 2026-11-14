@@ -5,7 +5,7 @@ check:
 	uv run --locked ruff check .
 	uv run --locked ruff format --check .
 	uv run --locked mypy
-	uv run --locked pytest --cov=xgenerateposts --cov-report=term-missing --cov-fail-under=85
+	uv run --locked pytest --cov=questcast --cov-report=term-missing --cov-fail-under=85
 
 # pip-audit on the lock, optional extras included, exported with hashes so pip-audit
 # doesn't resolve again.
@@ -20,6 +20,6 @@ sbom:
 	mkdir -p build
 	uv export --locked --all-extras --format cyclonedx1.5 --no-dev --preview-features sbom-export --quiet --output-file build/sbom.cdx.json
 
-# R42: build, install the wheel into a fresh venv with a temporary HOME, check xgp init.
+# R42: build, install the wheel into a fresh venv with a temporary HOME, check qc init.
 install-check:
 	bash scripts/install-check.sh

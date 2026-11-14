@@ -11,19 +11,19 @@ tested. This is a one-person project, so replies may take a few days.
 
 ## Scope
 
-XGeneratePosts runs locally from the command line and has no hosted service.
+QuestCast runs locally from the command line and has no hosted service.
 Issues of particular interest:
 - key handling: API keys and tokens are read from `~/.ai_post_env` and the
-  environment (`xgenerateposts/config.py`) and must never be printed,
+  environment (`questcast/config.py`) and must never be printed,
   including in error messages;
 - what the author profile and topic send to the AI provider
-  (`xgenerateposts/prompt.py`, `xgenerateposts/providers.py`);
-- fetching feeds and following redirects (`xgenerateposts/net.py`,
-  `xgenerateposts/feeds.py`), including the refusal to follow an HTTPS
+  (`questcast/prompt.py`, `questcast/providers.py`);
+- fetching feeds and following redirects (`questcast/net.py`,
+  `questcast/feeds.py`), including the refusal to follow an HTTPS
   redirect to plain HTTP;
 - the draft-only default: nothing is posted to X or LinkedIn without an
   explicit `--post` or `--post-linkedin` flag;
-- `xgp init`: the profile it creates in `~/XPosts` gets file mode 600, and an
+- `qc init`: the profile it creates in `~/XPosts` gets file mode 600, and an
   existing profile is never overwritten.
 
 ## Supported versions

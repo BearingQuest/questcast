@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from xgenerateposts import config, feeds, prompt, search
+from questcast import config, feeds, prompt, search
 
 FEED_A = "https://feeds.example/a.xml"
 FEED_B = "https://feeds.example/b.xml"

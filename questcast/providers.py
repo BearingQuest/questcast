@@ -6,8 +6,8 @@ import re
 import urllib.error
 import urllib.request
 
-from xgenerateposts import config, net, progress
-from xgenerateposts.config import (
+from questcast import config, net, progress
+from questcast.config import (
     CONSOLE_BILLING,
     CONSOLE_KEYS,
     DEFAULT_PROVIDER,
@@ -125,7 +125,7 @@ class AnthropicProvider:
             raise SystemExit(
                 "\n--provider anthropic needs the anthropic package (the 'anthropic' extra).\n"
                 "From the repo clone, install it one of two ways:\n\n"
-                "  installed xgp:      uv tool install --reinstall '.[anthropic]'\n"
+                "  installed qc:      uv tool install --reinstall '.[anthropic]'\n"
                 "  the clone's venv:   ~/.ai_post_venv/bin/pip install -e '.[anthropic]'\n"
             ) from None
 

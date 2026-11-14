@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Runs XGeneratePosts from a repo clone. The code is in the xgenerateposts
-package; an installed copy provides the same command as xgp."""
+"""Runs QuestCast from a repo clone. The code is in the questcast
+package; an installed copy provides the same command as qc."""
 
-from xgenerateposts.cli import main
+from questcast.cli import main
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from xgenerateposts.config import MAX_RESPONSE_BYTES
+from questcast.config import MAX_RESPONSE_BYTES
 
 DEFAULT_PORTS = {"http": 80, "https": 443}
 

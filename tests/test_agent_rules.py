@@ -55,6 +55,8 @@ REQUIRED_DENY = [
     "Bash(git * tag *)",
     "Bash(*xgp --post*)",
     "Bash(*xgp * --post*)",
+    "Bash(*qc --post*)",
+    "Bash(*qc * --post*)",
     "Bash(*daily_post.py --post*)",
     "Bash(*daily_post.py * --post*)",
     "Bash(rm -rf *)",

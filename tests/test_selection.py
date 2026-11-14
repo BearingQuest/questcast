@@ -2,7 +2,7 @@
 
 import pytest
 
-from xgenerateposts import config, providers, search
+from questcast import config, providers, search
 
 
 def test_provider_defaults_to_groq():

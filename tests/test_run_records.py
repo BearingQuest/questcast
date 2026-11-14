@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
+from questcast import cli
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
-from xgenerateposts import cli
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 FEED = rb"""<?xml version="1.0"?><rss version="2.0"><channel>

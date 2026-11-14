@@ -7,7 +7,7 @@ import urllib.request
 
 import pytest
 
-from xgenerateposts import config, net, publish
+from questcast import config, net, publish
 
 TOKEN = "Bearer tok_SENTINEL_0123456789"  # noqa: S105 - fake token for assertions
 LINKEDIN_POSTS = "https://api.linkedin.com/rest/posts"

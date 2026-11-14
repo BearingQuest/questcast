@@ -32,7 +32,7 @@ def test_sbom_lists_the_extras_and_no_dev_only_package():
         check=True,
     )
     sbom = json.loads(result.stdout)
-    assert sbom["metadata"]["component"]["name"] == "xgenerateposts"
+    assert sbom["metadata"]["component"]["name"] == "questcast"
     names = {component["name"] for component in sbom["components"]}
     assert "anthropic" in names
     assert not names & DEV_ONLY

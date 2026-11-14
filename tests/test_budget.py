@@ -6,9 +6,9 @@ import sys
 
 import pytest
 
+from questcast import cli, config, dedup, feeds, prompt, providers, search
 from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
 from tests.test_rss import FEED_A, FEED_B, PROFILE, dated, rss
-from xgenerateposts import cli, config, dedup, feeds, prompt, providers, search
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 FULL_PROFILE = {"beat": "Practitioners.", "voice": "Plain.", **PROFILE}

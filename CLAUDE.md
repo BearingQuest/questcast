@@ -1,4 +1,4 @@
-# XGeneratePosts
+# QuestCast
 
 Command-line tool that drafts X and LinkedIn posts from an author profile and a topic chosen at run time. Python, single script (`daily_post.py`).
 

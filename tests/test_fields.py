@@ -1,7 +1,7 @@
 import pytest
 
+from questcast import fields
 from tests.conftest import MODEL_OUTPUT
-from xgenerateposts import fields
 
 
 def test_parse_fields_ignores_text_before_first_delimiter():

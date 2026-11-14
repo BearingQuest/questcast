@@ -7,8 +7,8 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from urllib.parse import urlsplit
 
-from xgenerateposts import config, net
-from xgenerateposts.config import (
+from questcast import config, net
+from questcast.config import (
     FEED_TIMEOUT,
     HTTP_USER_AGENT,
     MAX_FEED_BYTES,
@@ -16,8 +16,8 @@ from xgenerateposts.config import (
     NOTHING_LOST,
     SEARCH_SOURCES,
 )
-from xgenerateposts.dedup import is_used
-from xgenerateposts.feeds import (
+from questcast.dedup import is_used
+from questcast.feeds import (
     FeedEntry,
     format_candidates,
     newest,
@@ -25,8 +25,8 @@ from xgenerateposts.feeds import (
     ranked,
     require_expat,
 )
-from xgenerateposts.prompt import PROMPT_SECTIONS, estimate_tokens
-from xgenerateposts.storage import warn
+from questcast.prompt import PROMPT_SECTIONS, estimate_tokens
+from questcast.storage import warn
 
 
 def select_search(flag: str | None, provider_name: str) -> str:

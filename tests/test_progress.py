@@ -159,9 +159,32 @@ cli.main()
 """
 
 
+def open_pty():
+    """A pty pair, or a skip where the sandbox hands out none. CI must still fail on it."""
+    try:
+        return pty.openpty()
+    except OSError as error:
+        if "CI" in os.environ:
+            raise
+        pytest.skip(f"this sandbox allocates no pty devices ({error}); CI runs the test")
+
+
+def test_open_pty_skips_outside_ci_and_fails_in_ci(monkeypatch):
+    def refuse():
+        raise OSError("out of pty devices")
+
+    monkeypatch.setattr(pty, "openpty", refuse)
+    monkeypatch.delenv("CI", raising=False)
+    with pytest.raises(pytest.skip.Exception, match="no pty devices"):
+        open_pty()
+    monkeypatch.setenv("CI", "true")
+    with pytest.raises(OSError, match="out of pty devices"):
+        open_pty()
+
+
 def test_ctrl_c_on_a_real_terminal_cancels_and_leaves_the_line_clean(tmp_path):
     """A real SIGINT, with stderr on a pty so the ticker thread runs."""
-    master, slave = pty.openpty()
+    master, slave = open_pty()
     child = popen(
         [sys.executable, "-c", CHILD],
         cwd=REPO_ROOT,

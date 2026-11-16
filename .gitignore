@@ -10,6 +10,12 @@ drafts.md
 history.json
 run.log
 
+# macOS and Terraform noise
+.DS_Store
+*.tfstate
+*.tfstate.*
+.terraform/
+
 # IDE and Python noise
 .idea/
 .vscode/

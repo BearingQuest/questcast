@@ -15,6 +15,7 @@ import urllib.error
 import pytest
 
 from questcast import config, progress
+from tests._proc import popen
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -161,7 +162,7 @@ cli.main()
 def test_ctrl_c_on_a_real_terminal_cancels_and_leaves_the_line_clean(tmp_path):
     """A real SIGINT, with stderr on a pty so the ticker thread runs."""
     master, slave = pty.openpty()
-    child = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
+    child = popen(
         [sys.executable, "-c", CHILD],
         cwd=REPO_ROOT,
         stdin=subprocess.DEVNULL,

@@ -4,11 +4,14 @@ on:
     branches-ignore: [master]
 permissions:
   contents: read
-  pull-requests: write
 jobs:
   notice:
+    name: notice
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read # the job block replaces the workflow grant; the event file is local
+      pull-requests: write # comment on the pull request
     steps:
       - name: Mention Dusten on auto-fix commits
         env:

@@ -1,6 +1,6 @@
 .PHONY: check audit sbom install-check
 
-# Lint, format check, types and tests, all from uv.lock. CI's lint job runs this.
+# Lint, format check, types and tests, all from uv.lock. CI's check job runs this.
 check:
 	uv run --locked ruff check .
 	uv run --locked ruff format --check .

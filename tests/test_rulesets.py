@@ -1,7 +1,9 @@
-"""CI-01, CI-08, DOC-04: the ruleset files match the workflows and keep the gates.
+"""R35, R37, CI-01, CI-08, DOC-04: the ruleset files match the workflows and keep the gates.
 
 The files in .github/rulesets/ are applied by Dusten; nothing here calls GitHub. A required
 check that no job produces would block every merge, so each context must be a job name.
+R35 and R37 (the security workflow's gitleaks, semgrep and pip-audit jobs) are covered here
+as far as their job names go: each is a required check that a job produces.
 """
 
 import json

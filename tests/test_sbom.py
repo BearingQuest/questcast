@@ -2,20 +2,18 @@
 dev tools."""
 
 import json
-import shutil
-import subprocess
 from pathlib import Path
+
+from tests._proc import run
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEV_ONLY = {"pytest", "pytest-cov", "ruff", "mypy", "pip-audit"}
 
 
 def test_sbom_lists_the_extras_and_no_dev_only_package():
-    uv = shutil.which("uv")
-    assert uv, "uv must be on PATH to export the SBOM"
-    result = subprocess.run(  # noqa: S603 - fixed argv list, no shell
+    result = run(
         [
-            uv,
+            "uv",
             "export",
             "--locked",
             "--all-extras",

@@ -4,9 +4,10 @@ frozen acceptance tests all do this, so this keeps the old-name path covered by
 a test that is not frozen: the names still work, and each run says so once."""
 
 import os
-import subprocess
 import sys
 from pathlib import Path
+
+from tests._proc import run
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +24,7 @@ def test_help_with_only_old_names_prints_the_deprecation_notice_once(tmp_path):
     }
     assert not [name for name in env if name.startswith("QC_POST_")]
 
-    result = subprocess.run(
+    result = run(
         [sys.executable, "daily_post.py", "--help"],
         cwd=REPO_ROOT,
         env=env,

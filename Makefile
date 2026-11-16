@@ -1,4 +1,4 @@
-.PHONY: check audit sbom install-check
+.PHONY: check audit sbom install-check hooks
 
 # Lint, format check, types and tests, all from uv.lock. CI's check job runs this.
 check:
@@ -23,3 +23,7 @@ sbom:
 # R42: build, install the wheel into a fresh venv with a temporary HOME, check qc init.
 install-check:
 	bash scripts/install-check.sh
+
+# Use the committed hooks in .githooks; pre-push runs gitleaks on the commits being pushed.
+hooks:
+	git config core.hooksPath .githooks

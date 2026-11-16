@@ -223,6 +223,22 @@ stderr; see "Migrating from XGeneratePosts" below:
 | `QC_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
 | `QC_POST_DATA_DIR` | `~/QuestCast` (`~/XPosts` if that is all you have) | Where the profile, drafts, history and run log live |
 | `QC_POST_ENV_FILE` | `~/.qc_post_env` (`~/.ai_post_env` if that is all you have) | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
+| `X_API_KEY` | none | X app key, for `--post` (see "Optional: publishing to X") |
+| `X_API_SECRET` | none | X app secret, for `--post` |
+| `X_ACCESS_TOKEN` | none | X user access token with Read and Write, for `--post` |
+| `X_ACCESS_SECRET` | none | X user access token secret, for `--post` |
+| `LINKEDIN_ACCESS_TOKEN` | none | LinkedIn member access token, for `--post-linkedin` (see "Optional: publishing to LinkedIn") |
+| `LINKEDIN_AUTHOR_URN` | none | Your LinkedIn author URN, for `--post-linkedin` |
+| `LINKEDIN_API_VERSION` | `202601` | LinkedIn API version header sent with `--post-linkedin`; LinkedIn revises it periodically |
+| `AI_POST_PROVIDER` | the value of `QC_POST_PROVIDER` | Old name of `QC_POST_PROVIDER`. Read only when the new name isn't set, with a notice on stderr, for one release |
+| `AI_POST_SEARCH` | the value of `QC_POST_SEARCH` | Old name of `QC_POST_SEARCH`, read the same way |
+| `AI_POST_PROVIDER_TIMEOUT` | the value of `QC_POST_PROVIDER_TIMEOUT` | Old name of `QC_POST_PROVIDER_TIMEOUT`, read the same way |
+| `AI_POST_RSS_PER_FEED` | the value of `QC_POST_RSS_PER_FEED` | Old name of `QC_POST_RSS_PER_FEED`, read the same way |
+| `AI_POST_RSS_MAX_ENTRIES` | the value of `QC_POST_RSS_MAX_ENTRIES` | Old name of `QC_POST_RSS_MAX_ENTRIES`, read the same way |
+| `AI_POST_TOKEN_BUDGET` | the value of `QC_POST_TOKEN_BUDGET` | Old name of `QC_POST_TOKEN_BUDGET`, read the same way |
+| `AI_POST_RATE_LIMIT_WAIT` | the value of `QC_POST_RATE_LIMIT_WAIT` | Old name of `QC_POST_RATE_LIMIT_WAIT`, read the same way |
+| `AI_POST_DATA_DIR` | the value of `QC_POST_DATA_DIR` | Old name of `QC_POST_DATA_DIR`, read the same way |
+| `AI_POST_ENV_FILE` | the value of `QC_POST_ENV_FILE` | Old name of `QC_POST_ENV_FILE`, read from the shell environment only, like the new name |
 
 ### Rate limits and progress
 

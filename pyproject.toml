@@ -31,6 +31,10 @@ dev = [
     "ruff==0.17.4",
 ]
 
+[tool.uv]
+# Cooldown: ignore releases newer than 7 days (Semgrep reads only up to the first bracket).
+exclude-newer = "7 days"
+
 [tool.uv.build-backend]
 # Flat layout: the package sits at the repo root, so python daily_post.py
 # imports it without an install (R30).

@@ -23,6 +23,8 @@ at run time. Python 3.14, managed with uv. The package is `questcast` and the co
     `CLAUDE.md` imports it
   - `test_workflows.py` and `test_rulesets.py` - every workflow and the ruleset files
   - `test_hooks.py` - the pre-push hook and `make hooks`
+  - `test_readme.py` - the README's images, alt text, allowed hosts and `docs/readme/` files
+  - `test_pyproject_cooldown.py` - the uv install cooldown in `pyproject.toml` and `uv.lock`
   - `_proc.py` - the only place the non-frozen tests start a process
 - `scripts/install-check.sh` - `make install-check`
 - `Makefile` - `make check` (ruff, format check, mypy, pytest with the 85% coverage floor),
@@ -40,6 +42,7 @@ at run time. Python 3.14, managed with uv. The package is `questcast` and the co
   tests start local fake servers. See `docs/decisions.md`.
 - `.github/` - `workflows/`, `dependabot.yml`, `pull_request_template.md`, and `rulesets/`
   (ruleset JSON for Dusten to apply; agents never apply it)
+- `docs/readme/` - README images and the demo tape; checked by `tests/test_readme.py`
 - `docs/decisions.md` - one row per plan change, approved exception or new tool
 
 ## CI
@@ -82,6 +85,19 @@ version CI pins:
   otherwise.
 - Run every `gh` command on its own: no `cd`, `&&`, `;`, pipes or redirects. You already start
   in the repo. Only a plain `gh` call runs outside the sandbox, where it can read its login.
+- Push a branch with `git push origin <branch>`. Never use `-u` or `--set-upstream`: the
+  sandbox can't write `.git/config`, so the push fails.
+- A test that needs a pseudo-terminal (pty) skips outside CI, with the reason in the skip
+  message, and runs in CI. The sandbox can't allocate a pty.
+- A script that starts a browser outside the e2e container (for example a screenshot script)
+  is run by the owner in a plain Terminal after reading it. The sandbox can't start Chromium
+  on macOS. Say so in the plan; don't try it.
+- Don't add `sandbox.network.allowLocalBinding` unless this repo's tests start a local
+  server; if they do, propose it in the plan with a decisions row.
+- When a planned change first adds a Python package or `docs/PRD.md` to a repo that had none,
+  a GUI, a GitHub Pages site, a release workflow or the first release, or an AWS deploy or
+  `infra/`, say in the plan that a baseline re-audit is due and name the controls that start
+  to apply. The owner decides when to run it.
 - **Frozen acceptance tests.** Files under `tests/acceptance/` were written outside Claude Code
   and approved by Dusten. Never create, edit, delete, rename or reformat them, and never create
   a branch named `acceptance/*`. If a frozen test looks wrong, stop and ask Dusten. CI fails a
@@ -91,6 +107,9 @@ version CI pins:
   (`questcast/cli.py` and `questcast/storage.py`).
 - Pin every dependency exactly, to the newest release at least 7 days old, and add a row to
   `docs/decisions.md` for each tool or library you add.
+- Keep exclude-newer as the first key under [tool.uv]; never remove or loosen it to get a
+  newer version. If a security fix is newer than 7 days, propose a per-package
+  exclude-newer-package override and a decisions row, and stop for the owner.
 - **Pin actions to commit SHAs** with a version comment (`uses: owner/action@<sha> # vX.Y.Z`);
   never a bare tag. `tests/test_workflows.py` enforces this.
 - **Agent guardrails.** `.claude/settings.json` turns off auto and bypass-permissions modes,

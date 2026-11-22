@@ -274,6 +274,27 @@ AGENTS_RULES = [
     "Never commit or push to master.",
     "Every fix is a new commit whose message starts with `autofix(ci): `",
 ]
+# Rollout lessons for the sandbox and the scope-change flag, decided for every repo.
+AGENTS_ROLLOUT_RULES = [
+    "Push a branch with `git push origin <branch>`. Never use `-u` or `--set-upstream`: the "
+    "sandbox can't write `.git/config`, so the push fails.",
+    "A test that needs a pseudo-terminal (pty) skips outside CI, with the reason in the skip "
+    "message, and runs in CI. The sandbox can't allocate a pty.",
+    "A script that starts a browser outside the e2e container (for example a screenshot "
+    "script) is run by the owner in a plain Terminal after reading it. The sandbox can't "
+    "start Chromium on macOS. Say so in the plan; don't try it.",
+    "Don't add `sandbox.network.allowLocalBinding` unless this repo's tests start a local "
+    "server; if they do, propose it in the plan with a decisions row.",
+    "When a planned change first adds a Python package or `docs/PRD.md` to a repo that had "
+    "none, a GUI, a GitHub Pages site, a release workflow or the first release, or an AWS "
+    "deploy or `infra/`, say in the plan that a baseline re-audit is due and name the "
+    "controls that start to apply. The owner decides when to run it.",
+]
+AGENTS_COOLDOWN_RULE = (
+    "Keep exclude-newer as the first key under [tool.uv]; never remove or loosen it to get a "
+    "newer version. If a security fix is newer than 7 days, propose a per-package "
+    "exclude-newer-package override and a decisions row, and stop for the owner."
+)
 
 
 @pytest.fixture(scope="module")
@@ -429,6 +450,15 @@ def test_agents_md_has_the_full_human_gate_list(item: str) -> None:
 @pytest.mark.parametrize("rule", AGENTS_RULES)
 def test_agents_md_keeps_the_rules_moved_from_claude_md(rule: str) -> None:
     assert rule in _text("AGENTS.md")
+
+
+@pytest.mark.parametrize("rule", AGENTS_ROLLOUT_RULES)
+def test_agents_md_has_the_rollout_rules(rule: str) -> None:
+    assert rule in _text("AGENTS.md")
+
+
+def test_agents_md_has_the_install_cooldown_rule() -> None:
+    assert AGENTS_COOLDOWN_RULE in _text("AGENTS.md")
 
 
 def test_claude_md_imports_agents_md_and_keeps_the_context_block() -> None:

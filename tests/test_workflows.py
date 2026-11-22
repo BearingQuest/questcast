@@ -163,7 +163,14 @@ def test_claude_review_keeps_one_tool_and_turns_the_sandbox_off():
     # Safe only because the reviewer has no Bash: the one tool is the inline comment.
     assert args.count("--allowedTools") == 1
     assert args[args.index("--allowedTools") + 1 :] == [INLINE_COMMENT_TOOL]
-    assert [a for a in args if a.startswith("--")] == ["--settings", "--allowedTools"]
+    assert [a for a in args if a.startswith("--")] == ["--model", "--settings", "--allowedTools"]
+
+
+def test_claude_review_pins_an_exact_model():
+    # An exact model ID, not an alias: the reviewer changes only through a reviewed pull request.
+    args = shlex.split(literal_block(REVIEW, "claude_args"))
+    assert args.count("--model") == 1
+    assert args[args.index("--model") + 1] == "claude-sonnet-5-5"
 
 
 def test_claude_review_prompt_treats_the_pull_request_as_untrusted_and_names_a_real_file():

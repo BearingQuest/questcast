@@ -1,5 +1,25 @@
-# Daily Post Generator  
+<p align="center">
+  <a href="https://bearingquest.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/bearing-quest-lockup-on-dark.svg">
+      <img alt="Bearing Quest" src="docs/readme/bearing-quest-lockup-on-light.svg" width="220">
+    </picture>
+  </a>
+</p>
 
+<h1 align="center">QuestCast</h1>
+
+<p align="center">
+  Daily X and LinkedIn post drafts from one recent source, in your voice.<br>
+  Part of the <a href="https://bearingquest.com">Bearing Quest</a> project family.
+</p>
+
+<p align="center">
+  <a href="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml/badge.svg?branch=master"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/BearingQuest/questcast"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/BearingQuest/questcast/badge"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1B365D"></a>
+  <img alt="Python 3.14 or newer" src="https://img.shields.io/badge/python-3.14+-1B365D">
+</p>
 
 Pick a technology topic, and this finds one noteworthy recent item on it and
 drafts two social posts from that same source: a short one for X and a longer,
@@ -8,7 +28,8 @@ call both searches the web and writes the posts. Anthropic's Claude, or any
 OpenAI-compatible endpoint, can be swapped in with a flag, and RSS feeds you
 choose can replace the web search.
 
-Human-in-the-loop by default. Nothing is published unless you ask for it.
+> [!IMPORTANT]
+> Human-in-the-loop by default. Nothing is published unless you pass `--post` (X) or `--post-linkedin` (LinkedIn); read each draft first.
 
 The posts sound like *you* because of a profile file you write once and keep
 outside this repo. That file is the whole idea: the code is a small harness,
@@ -16,6 +37,20 @@ and the profile is where the topics, the voice, the point of view, and the
 guardrails live.
 
 ## How it works
+
+<img alt="Terminal demo: qc --help, then qc --list-topics showing a three-topic menu from a made-up profile." src="docs/readme/demo.gif" width="720">
+
+```mermaid
+flowchart LR
+  subgraph Mac["Your computer"]
+    PR["Author profile<br/>(outside the repo)"] --> T["Topic menu"]
+    T --> RUN["qc"]
+    RUN --> DR["drafts.md and run.log"]
+    DR --> YOU{"You review"}
+  end
+  RUN <-->|"one search-and-write call<br/>(or RSS feeds you choose)"| API["Groq, Anthropic or<br/>OpenAI-compatible API"]
+  YOU -. "only with --post or --post-linkedin" .-> PUB["X / LinkedIn"]
+```
 
 Each run:
 

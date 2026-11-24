@@ -1,4 +1,4 @@
-"""CI-02, CI-05, CI-07, CI-13, CI-14: guards on the workflow files.
+"""CI-02, CI-05, CI-07, CI-13, CI-14, R39: guards on the workflow files.
 
 The workflows are read as text with regular expressions: PyYAML is not a dev dependency.
 Each guard was mutation-checked by breaking the matching line and watching it fail.
@@ -16,6 +16,7 @@ WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 WORKFLOWS = sorted(WORKFLOW_DIR.glob("*.yml"))
 SCORECARD = WORKFLOW_DIR / "scorecard.yml"
 REVIEW = WORKFLOW_DIR / "claude-review.yml"
+RELEASE = WORKFLOW_DIR / "release.yml"
 MAIN_RULESET = REPO_ROOT / ".github" / "rulesets" / "main.json"
 
 REQUIRED_CHECKS = {"check", "gitleaks", "semgrep", "pip-audit", "zizmor"}
@@ -68,6 +69,30 @@ def literal_block(path: Path, key: str) -> str:
     return "\n".join(body).strip()
 
 
+def job_text(path: Path, job: str) -> str:
+    """The text of one job: the lines under its two-space `job:` key up to the next job."""
+    lines = text(path).splitlines()
+    start = next(i for i, line in enumerate(lines) if line == f"  {job}:")
+    body = []
+    for line in lines[start + 1 :]:
+        if re.match(r"^  \S", line) or re.match(r"^\S", line):
+            break
+        body.append(line)
+    return "\n".join(body)
+
+
+def run_text(path: Path, job: str) -> str:
+    """Every `run:` command of one job, inline and `|` blocks, as one string. Comments in the
+    job are left out, so a word in a comment can't satisfy or break a check."""
+    body = "\n".join(
+        line for line in job_text(path, job).splitlines() if not line.lstrip().startswith("#")
+    )
+    pattern = r"^( +)run: (?:[|>][-+]?\n((?:\1 .*\n?|\n)+)|(.+)$)"
+    return "\n".join(
+        match.group(2) or match.group(3) for match in re.finditer(pattern, body, re.MULTILINE)
+    )
+
+
 def test_both_new_workflows_exist_and_actions_are_found():
     assert SCORECARD in WORKFLOWS
     assert REVIEW in WORKFLOWS
@@ -90,13 +115,18 @@ def test_every_job_permission_has_a_comment(path):
         assert re.search(r" # \S", grant), grant.strip()
 
 
-def test_id_token_write_is_only_on_scorecard_and_claude_review():
+def test_id_token_write_is_only_on_scorecard_claude_review_and_release():
     holders = {path for path in WORKFLOWS if "id-token:" in text(path)}
-    assert holders == {SCORECARD, REVIEW}
+    assert holders == {SCORECARD, REVIEW, RELEASE}
     for path in holders:
-        assert len(re.findall(r"id-token:", text(path))) == 1, path.name
+        # Comments may mention the permission; only a real grant line counts.
+        assert len(re.findall(r"^\s+id-token:", text(path), re.MULTILINE)) == 1, path.name
         assert re.search(r"^ {6}id-token: write # \S", text(path), re.MULTILINE), path.name
+    for path in (SCORECARD, REVIEW):
         assert re.search(r"^permissions: \{\}$", text(path), re.MULTILINE), path.name
+    # The release's token is the read-only default; its job adds the grants (see below).
+    assert re.search(r"^permissions:\n  contents: read\n", text(RELEASE), re.MULTILINE)
+    assert "id-token" not in job_text(RELEASE, "build")
 
 
 @pytest.mark.parametrize("path", WORKFLOWS, ids=lambda path: path.name)
@@ -109,7 +139,7 @@ def test_neither_new_workflow_is_a_required_check():
     rule = next(r for r in ruleset["rules"] if r["type"] == "required_status_checks")
     contexts = {c["context"] for c in rule["parameters"]["required_status_checks"]}
     assert contexts == REQUIRED_CHECKS
-    assert not contexts & {"analysis", "review"}
+    assert not contexts & {"analysis", "review", "build", "release"}
 
 
 def test_scorecard_runs_on_a_weekly_schedule_and_pushes_to_the_default_branch_only():
@@ -179,3 +209,96 @@ def test_claude_review_prompt_treats_the_pull_request_as_untrusted_and_names_a_r
     named = re.search(r"rules in (\S+\.md)\.", prompt)
     assert named, "the prompt should name the file that holds the repository rules"
     assert (REPO_ROOT / named.group(1)).is_file()
+
+
+def test_release_runs_only_on_a_pushed_v_tag_with_a_read_only_default_token():
+    assert triggers(RELEASE) == {"push"}
+    block = "\n".join(top_level_block(RELEASE, "on"))
+    assert re.search(r'^    tags: \["v\*"\]$', block, re.MULTILINE)
+    assert "branches" not in block
+    assert [line for line in top_level_block(RELEASE, "permissions") if line] == [
+        "  contents: read"
+    ]
+    assert re.search(r"^  cancel-in-progress: false$", text(RELEASE), re.MULTILINE)
+
+
+def test_release_write_grants_are_only_on_the_release_job_each_with_a_comment():
+    assert "permissions" not in job_text(RELEASE, "build")
+    grants = re.findall(r"^\s+([a-z-]+): write\b(.*)$", text(RELEASE), re.MULTILINE)
+    assert sorted(name for name, _ in grants) == ["attestations", "contents", "id-token"]
+    for name, rest in grants:
+        assert re.match(r" # \S", rest), name
+    release = job_text(RELEASE, "release")
+    for name in ("contents", "attestations", "id-token"):
+        assert re.search(rf"^ {{6}}{name}: write # \S", release, re.MULTILINE), name
+
+
+def test_release_job_needs_build_and_runs_no_code_from_the_build():
+    release = job_text(RELEASE, "release")
+    assert re.search(r"^    needs: build$", release, re.MULTILINE)
+    assert "actions/checkout@" not in release
+    assert "actions/download-artifact@" in release
+    for tool in (r"\buv\b", r"\buvx\b", r"\bmake\b", r"\bpip\b", r"\bpython3?\b"):
+        assert not re.search(tool, run_text(RELEASE, "release")), tool
+
+
+def test_release_build_job_checks_the_tag_then_builds_the_sbom_into_dist():
+    build = job_text(RELEASE, "build")
+    assert re.search(r"^ {10}persist-credentials: false$", build, re.MULTILINE)
+    run = run_text(RELEASE, "build")
+    assert "pyproject.toml" in run and 'f"v{version}"' in run
+    assert "tag != " in run and "SystemExit" in run
+    assert run.index('f"v{version}"') < run.index("uv build")
+    assert run.index("uv build") < run.index("make sbom")
+    assert run.index("make sbom") < run.index("cp build/sbom.cdx.json dist/sbom.cdx.json")
+    assert "scripts/release_notes.py" in run
+
+
+def test_release_build_job_uploads_the_four_files_for_one_day():
+    build = job_text(RELEASE, "build")
+    assert re.search(r"^ {10}retention-days: 1$", build, re.MULTILINE)
+    assert re.search(r"^ {10}if-no-files-found: error$", build, re.MULTILINE)
+    paths = literal_block(RELEASE, "path").split()
+    assert paths == [
+        "dist/*.whl",
+        "dist/*.tar.gz",
+        "dist/sbom.cdx.json",
+        "dist/release-notes.md",
+    ]
+
+
+def test_release_attests_the_wheel_the_sdist_and_the_sbom_before_creating_the_draft():
+    release = job_text(RELEASE, "release")
+    assert literal_block(RELEASE, "subject-path").split() == [
+        "release-files/*.whl",
+        "release-files/*.tar.gz",
+        "release-files/sbom.cdx.json",
+    ]
+    assert release.index("actions/attest-build-provenance@") < release.index(
+        "- name: Create the draft release"
+    )
+
+
+def test_release_creates_a_draft_only_and_names_the_repository_in_env():
+    release = job_text(RELEASE, "release")
+    run = run_text(RELEASE, "release")
+    assert "gh release create" in run
+    assert "--draft" in run and "--verify-tag" in run
+    assert "--latest" not in run and "--prerelease=false" not in run
+    assert "gh release edit" not in text(RELEASE)
+    # No checkout, so gh needs the repository; set in env, never inside run.
+    assert re.search(r"^ {10}GH_REPO: \$\{\{ github\.repository \}\}$", release, re.MULTILINE)
+    assert re.search(r"^ {10}GH_TOKEN: \$\{\{ github\.token \}\}$", release, re.MULTILINE)
+
+
+def test_release_never_interpolates_expressions_into_a_run_script():
+    for job in ("build", "release"):
+        assert run_text(RELEASE, job).strip(), job
+        assert "${{" not in run_text(RELEASE, job), job
+
+
+def test_release_notes_come_from_a_changelog_section_with_no_unreleased_fallback():
+    run = run_text(RELEASE, "build")
+    assert 'release_notes.py "${TAG#v}" CHANGELOG.md dist/release-notes.md' in run
+    assert "Unreleased" not in run
+    assert "Unreleased" not in text(REPO_ROOT / "scripts" / "release_notes.py")

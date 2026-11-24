@@ -14,11 +14,11 @@ audit:
 	uv export --locked --all-extras --format requirements.txt --no-emit-project --quiet --output-file build/requirements-audit.txt
 	uv run --locked pip-audit --strict --disable-pip --requirement build/requirements-audit.txt
 
-# CycloneDX SBOM of the runtime dependencies and optional extras (R43, R49).
-# uv's export is a preview feature.
+# CycloneDX SBOM of the default install's runtime dependencies, no optional extras (R43;
+# supersedes R49, docs/decisions.md). uv's export is a preview feature.
 sbom:
 	mkdir -p build
-	uv export --locked --all-extras --format cyclonedx1.5 --no-dev --preview-features sbom-export --quiet --output-file build/sbom.cdx.json
+	uv export --locked --format cyclonedx1.5 --no-dev --preview-features sbom-export --quiet --output-file build/sbom.cdx.json
 
 # R42: build, install the wheel into a fresh venv with a temporary HOME, check qc init.
 install-check:

@@ -3,7 +3,8 @@
 # with a throwaway HOME and data directory, and check qc --help, xgp --help and qc init.
 set -euo pipefail
 
-tmp=$(mktemp -d)
+# An explicit template: macOS mktemp -d ignores $TMPDIR, and the sandbox only lets us write there.
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/qc-install.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 
 rm -rf dist

@@ -970,7 +970,7 @@ wheels = [
 
 [[package]]
 name = "questcast"
-version = "3.1.0.dev0"
+version = "3.1.0"
 source = { editable = "." }
 
 [package.optional-dependencies]

@@ -124,17 +124,12 @@ def generate_item(
     return item
 
 
-def run() -> None:
-    """One run: parse the flags, then draft (and optionally publish)."""
-    # Loaded first, so QC_POST_DATA_DIR set in the env file applies to the
-    # --profile default as well as to the history, drafts and run log.
-    config.load_env_file()
-    for notice in config.legacy_notices():
-        print(notice, file=sys.stderr)
-
+def build_parser() -> argparse.ArgumentParser:
+    """The command-line parser; abbreviated flags are rejected, not guessed."""
     parser = argparse.ArgumentParser(
+        allow_abbrev=False,
         description="Daily X and LinkedIn draft generator, driven by an "
-        "author profile file and a topic you pick at run time."
+        "author profile file and a topic you pick at run time.",
     )
     parser.add_argument(
         "--topic",
@@ -174,9 +169,22 @@ def run() -> None:
     )
     commands = parser.add_subparsers(dest="command", title="commands", metavar="COMMAND")
     commands.add_parser(
-        "init", help="create the data directory and an author profile to fill in, then exit"
+        "init",
+        help="create the data directory and an author profile to fill in, then exit",
+        allow_abbrev=False,
     )
-    args = parser.parse_args()
+    return parser
+
+
+def run() -> None:
+    """One run: parse the flags, then draft (and optionally publish)."""
+    # Loaded first, so QC_POST_DATA_DIR set in the env file applies to the
+    # --profile default as well as to the history, drafts and run log.
+    config.load_env_file()
+    for notice in config.legacy_notices():
+        print(notice, file=sys.stderr)
+
+    args = build_parser().parse_args()
 
     if args.command == "init":
         init()

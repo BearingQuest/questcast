@@ -78,14 +78,74 @@ Each run:
   `--post` needs tweepy, installed by hand (see
   [Optional: publishing to X](#optional-publishing-to-x)).
 
+## Install
+
+Install the `qc` command from a tagged release (Python 3.14 or newer; `uv`
+fetches it if you don't have it). Releases are listed at
+https://github.com/BearingQuest/questcast/releases.
+
+```bash
+# uv, from the tag (needs git):
+uv tool install git+https://github.com/BearingQuest/questcast@v3.1.0
+# pipx, from the tag:
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v3.1.0
+
+# or from the release's wheel:
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v3.1.0/questcast-3.1.0-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v3.1.0/questcast-3.1.0-py3-none-any.whl
+```
+
+**First run.** Create the data directory and a profile to fill in, and the key
+file, private from the start. Don't put the key on a command line: it would
+stay in your shell history.
+
+```bash
+qc init                            # creates ~/QuestCast and author_profile.md
+(umask 077; touch ~/.qc_post_env)  # empty file, readable only by you
+ls -l ~/.qc_post_env               # -rw-------
+```
+
+Open `~/.qc_post_env` in an editor and add one line, with your own key from
+https://console.groq.com/keys:
+
+```
+GROQ_API_KEY=<your key>
+```
+
+Then fill in `## Beat` and `## Voice` in `~/QuestCast/author_profile.md`
+(see [Setup](#setup), step 3) and run `qc`.
+
+**Upgrade** to a new release by installing its tag over the old one:
+
+```bash
+uv tool install --reinstall git+https://github.com/BearingQuest/questcast@v<new version>
+pipx install --force --python python3.14 git+https://github.com/BearingQuest/questcast@v<new version>
+```
+
+**Uninstall:**
+
+```bash
+uv tool uninstall questcast   # or: pipx uninstall questcast
+```
+
+Your data folder, profile and key file are not touched; delete them by hand
+if you want them gone.
+
+**Verify a download.** Each release's wheel, source archive and SBOM carry a
+build-provenance attestation. For a file you downloaded from the release (not
+for an install from git), check it with the GitHub CLI:
+
+```bash
+gh attestation verify questcast-3.1.0-py3-none-any.whl -R BearingQuest/questcast
+```
+
 ## Setup
 
 There are two ways to run it:
 
-- **Installed, as the `qc` command.** Installing from a tagged release, with
-  `uv tool install` or `pipx`, is documented when releases start (v3.1 PR 4).
-  Once installed, `qc init` creates your data directory and a profile to fill
-  in, and `qc` takes the same flags as `daily_post.py` below.
+- **Installed, as the `qc` command.** See [Install](#install). Once installed,
+  `qc init` creates your data directory and a profile to fill in, and `qc`
+  takes the same flags as `daily_post.py` below.
 - **From a clone of this repo**, with `python daily_post.py`. The steps below
   cover this path; every command works the same as `qc`.
 
@@ -102,11 +162,11 @@ python3 -m venv ~/.qc_post_venv    # earlier installs: ~/.ai_post_venv still wor
 **2. API key**, in a protected file outside the repo:
 
 ```bash
-echo 'export GROQ_API_KEY=gsk_your-full-key' >> ~/.qc_post_env
-chmod 600 ~/.qc_post_env
+(umask 077; touch ~/.qc_post_env)   # private from the start; ls -l shows -rw-------
 ```
 
-Use `ANTHROPIC_API_KEY` instead (from https://console.anthropic.com/settings/keys)
+Then open it in an editor and add `GROQ_API_KEY=<your key>`, so the key never
+sits in your shell history. Use `ANTHROPIC_API_KEY` instead (from https://console.anthropic.com/settings/keys)
 if you run `--provider anthropic`.
 
 The script loads this at startup. An already-set environment variable wins,
@@ -394,7 +454,7 @@ With [uv](https://docs.astral.sh/uv/) installed:
 uv sync      # Python from .python-version, plus the dev tools from uv.lock
 make check   # ruff check, ruff format --check, mypy, pytest with coverage
 make audit   # pip-audit against the locked dependencies, optional extras included
-make sbom    # CycloneDX SBOM of the runtime dependencies and optional extras, to build/sbom.cdx.json
+make sbom    # CycloneDX SBOM of the default install's runtime dependencies, to build/sbom.cdx.json
 make install-check  # build, check the wheel's extras, install into a clean venv, check qc --help, xgp --help and qc init
 ```
 
@@ -417,8 +477,13 @@ are a guardrail, not a sandbox. Only Dusten edits it.
 
 Each push to master uploads the SBOM as a workflow artifact named
 `sbom-<commit SHA>` (`.github/workflows/sbom.yml`, kept 90 days); download it
-from that run on the Actions tab. From v3.1 PR 3c it lists the optional
-`anthropic` extra and everything it pulls in, not just the package itself.
+from that run on the Actions tab. It covers the default install only: the
+optional `anthropic` extra and the dev tools are not in it.
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds the wheel
+and the source archive, writes the same SBOM, attests all three and opens a
+draft GitHub release; the release is published by hand. The release notes are
+the tag's section of `CHANGELOG.md`.
 
 ## Design notes
 

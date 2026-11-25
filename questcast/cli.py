@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from questcast import config, storage
-from questcast.author_profile import match_topic, topic_menu
+from questcast.author_profile import match_topic, topic_menu, unfilled_sections
 from questcast.config import (
     DEFAULT_PROVIDER,
     MAX_LINKEDIN_TEXT,
@@ -204,6 +204,15 @@ def run() -> None:
             print(f"{i:>2}. {topic}")
         return
 
+    unfilled = unfilled_sections(profile, storage.example_profile())
+    if unfilled:
+        raise SystemExit(
+            f"{args.profile} still has the example text in: "
+            + ", ".join(f"## {name.title()}" for name in unfilled)
+            + ".\nFill those sections in (see the README), then run again. "
+            "Nothing was sent to a provider."
+        )
+
     provider = make_provider(select_provider(args.provider))
     search_name = select_search(args.search, provider.name)
     storage.RUN_VIA = f"{provider.name}/{provider.model or 'unset'}, search {search_name}"
@@ -211,7 +220,7 @@ def run() -> None:
     search = make_search(search_name, profile)
 
     topic = choose_topic(topics, args.topic, args.random_topic)
-    config.data_dir().mkdir(parents=True, exist_ok=True)
+    storage.ensure_data_dir()
 
     history = load_history()
     used_urls, used_titles = used_from(history)

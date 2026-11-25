@@ -27,11 +27,39 @@ def token_note(usage: dict[str, int] | None, estimate: int) -> str:
     return f" — tokens: {counts}, estimate {estimate}"
 
 
+def ensure_data_dir() -> Path:
+    """Create the data directory if it is missing, with mode 700 since it holds
+    the profile, drafts and history. An existing one keeps its mode.
+
+    If it can't be created, stop with a plain message naming the path, the OS's
+    reason and the setting that moves it, instead of a traceback.
+    """
+    data = config.data_dir()
+    if data.is_dir():
+        return data
+    try:
+        data.parent.mkdir(parents=True, exist_ok=True)
+        data.mkdir(mode=0o700, exist_ok=True)
+        data.chmod(0o700)  # mkdir's mode is reduced by the umask
+    except OSError as exc:
+        raise SystemExit(
+            f"Can't create the QuestCast data folder {data}: {exc.strerror or exc}.\n"
+            "Set QC_POST_DATA_DIR to a folder you can write to."
+        ) from None
+    return data
+
+
 def log_run(message: str) -> None:
-    config.data_dir().mkdir(parents=True, exist_ok=True)
+    """Append to run.log. Never raises: it runs on the error path, where a
+    second failure would hide the first, so a write problem is one stderr line."""
     via = f" [via {RUN_VIA}]" if RUN_VIA else ""
-    with config.log_file().open("a") as f:
-        f.write(f"{datetime.now().isoformat(timespec='seconds')} {message}{via}\n")
+    try:
+        ensure_data_dir()
+        with config.log_file().open("a") as f:
+            f.write(f"{datetime.now().isoformat(timespec='seconds')} {message}{via}\n")
+    except (OSError, SystemExit) as exc:
+        reason = getattr(exc, "strerror", None) or "data folder can't be created"
+        print(f"Could not write the run log {config.log_file()}: {reason}", file=sys.stderr)
 
 
 def warn(message: str) -> None:
@@ -51,20 +79,25 @@ def load_profile(path: Path) -> dict:
     return parse_profile(path.read_text(), path)
 
 
+def example_profile_text() -> str:
+    """The example profile shipped inside the package."""
+    return resources.files("questcast").joinpath(config.EXAMPLE_PROFILE).read_text()
+
+
+def example_profile() -> dict[str, str]:
+    """The shipped example profile, parsed like a real one."""
+    return parse_profile(example_profile_text(), Path(config.EXAMPLE_PROFILE))
+
+
 def create_profile() -> Path:
     """Copy the example profile to the data directory as author_profile.md,
     with mode 600 (R33). Never overwrites: raises FileExistsError if a file
     (or a symlink) is already there.
 
-    A missing data directory is created with mode 700, since it holds the
-    profile, drafts and history. An existing one keeps its mode.
+    A missing data directory is created with mode 700 (see ensure_data_dir).
     """
-    example = resources.files("questcast").joinpath(config.EXAMPLE_PROFILE).read_bytes()
-    data = config.data_dir()
-    if not data.exists():
-        data.parent.mkdir(parents=True, exist_ok=True)
-        data.mkdir(mode=0o700)
-        data.chmod(0o700)  # mkdir's mode is reduced by the umask
+    example = example_profile_text().encode()
+    ensure_data_dir()
     path = config.profile_file()
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "wb") as f:
@@ -96,7 +129,7 @@ def log_drafts(
     posted_li: bool,
     via: str = "",
 ) -> None:
-    config.data_dir().mkdir(parents=True, exist_ok=True)
+    ensure_data_dir()
     entry = (
         f"\n---\n\n# {date.today().isoformat()} — {item['title']}\n\n"
         f"Topic: {topic}\n"

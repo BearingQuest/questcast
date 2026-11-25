@@ -24,6 +24,20 @@ from questcast.config import (
 )
 
 
+def missing_key_message(key_var: str, keys_url: str, flag: str = "") -> str:
+    """How to add a missing API key without it touching a command line: the
+    file is created private first, and the key is typed in an editor, so it
+    stays out of shell history and is never readable by others."""
+    path = config.env_file()
+    return (
+        f"\nNo {key_var} found{flag} (checked {path} and the environment).\n\n"
+        f"  Create one at {keys_url}, then:\n\n"
+        f"    1. Create the file private first:  (umask 077; touch {path})\n"
+        f"    2. Open {path} in an editor and add one line:  {key_var}=...\n"
+        "       Don't put the key on a command line: it would stay in your shell history.\n"
+    )
+
+
 def friendly_api_error(exc: Exception) -> str:
     """Turn an Anthropic SDK exception into something worth reading.
 
@@ -111,12 +125,7 @@ class AnthropicProvider:
 
     def require_credentials(self) -> None:
         if not config.anthropic_api_key():
-            raise SystemExit(
-                f"\nNo ANTHROPIC_API_KEY found (checked {config.env_file()} and the "
-                f"environment).\n\n  Create one at {CONSOLE_KEYS}, then:\n\n"
-                f"    echo 'export ANTHROPIC_API_KEY=sk-ant-...' > {config.env_file()}\n"
-                f"    chmod 600 {config.env_file()}\n"
-            )
+            raise SystemExit(missing_key_message("ANTHROPIC_API_KEY", CONSOLE_KEYS))
 
     def generate(self, prompt: str, native_search: bool = True) -> str:
         try:
@@ -232,11 +241,8 @@ class GroqProvider(OpenAICompatProvider):
     def require_credentials(self) -> None:
         if not self.api_key():
             raise SystemExit(
-                f"\nNo GROQ_API_KEY found for --provider groq (checked {config.env_file()} and "
-                f"the environment).\n\n  Create one at {GROQ_KEYS}, then:\n\n"
-                f"    echo 'export GROQ_API_KEY=gsk_...' >> {config.env_file()}\n"
-                f"    chmod 600 {config.env_file()}\n\n"
-                "  Or pick another provider with --provider.\n"
+                missing_key_message("GROQ_API_KEY", GROQ_KEYS, " for --provider groq")
+                + "\n  Or pick another provider with --provider.\n"
             )
 
     def request_body(self, prompt: str, native_search: bool) -> dict:

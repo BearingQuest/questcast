@@ -64,6 +64,44 @@ def parse_profile(text: str, path: Path) -> dict[str, str]:
     return parsed
 
 
+# Sections whose text (or, for topics, the chosen topic) goes to the provider.
+# "never" is left out of the unedited check: the example's rules are real rules,
+# so keeping them as they are is a legitimate profile.
+CHECKED_SECTIONS = ("topics", "beat", "voice", "experience", "hashtags")
+
+
+def _bullet_text(line: str) -> str:
+    return re.sub(r"^\s*(?:[-*]|\d+[.)])\s*", "", line).strip()
+
+
+def _placeholder_lines(example: dict[str, str]) -> set[str]:
+    """The example's own placeholder lines, whole and stripped: its bullets that
+    start with '(' and its '#Tag' lines. Taken from the shipped file, so they
+    can't drift from it."""
+    lines = set()
+    for name in CHECKED_SECTIONS:
+        for line in example.get(name, "").splitlines():
+            if _bullet_text(line).startswith(("(", "#")):
+                lines.add(line.strip())
+    return lines
+
+
+def unfilled_sections(profile: dict[str, str], example: dict[str, str]) -> list[str]:
+    """Names of the sections still holding the example profile's text: the body
+    equals the example's, or it keeps one of the example's placeholder lines
+    exactly. A real line that merely starts with '(' is not a placeholder."""
+    placeholders = _placeholder_lines(example)
+    unfilled = []
+    for name in CHECKED_SECTIONS:
+        body = profile.get(name, "")
+        if not body:
+            continue
+        lines = {line.strip() for line in body.splitlines()}
+        if body == example.get(name) or lines & placeholders:
+            unfilled.append(name)
+    return unfilled
+
+
 def topic_menu(profile: dict[str, str]) -> list[str]:
     """Topics from the profile's '## Topics' section, else the built-in
     catalog. One topic per line; '-' and '*' bullets and numbering are

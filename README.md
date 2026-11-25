@@ -71,6 +71,8 @@ Each run:
 ## Requirements
 
 - Python 3.13 or newer
+- macOS and Linux with Python 3.13+; iPhone via a-Shell with native search only (see
+  [iPhone (a-Shell)](#iphone-a-shell))
 - A free Groq API key — https://console.groq.com/keys
 - Nothing else for the default setup: the `groq` and `openai-compat` providers
   use only the standard library. `--provider anthropic` needs the `anthropic`
@@ -205,6 +207,38 @@ credentials on your behalf.
 
 Keep this file out of version control — it is personal, and it is already in
 `.gitignore`.
+
+## iPhone (a-Shell)
+
+Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.com/app/id1473805438)
+with its Python 3.13 and QuestCast 3.1.1. It is tested, not supported: CI can't run a-Shell. iPad is
+untested.
+
+- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl`.
+  The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
+  (see [Install](#install)) happens on a computer.
+- **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be
+  created. Put two lines in `~/Documents/.profile`, which a-Shell runs when it opens:
+
+  ```bash
+  export QC_POST_DATA_DIR="$HOME/Documents/QuestCast"
+  export QC_POST_ENV_FILE="$HOME/Documents/.qc_post_env"
+  ```
+
+  Then run `qc init`.
+- **Key.** Create `~/Documents/.qc_post_env` in an editor (`vim`) with one line,
+  `GROQ_API_KEY=<your key>`. Use a separate key for the phone, so it can be revoked on its own.
+- **Profile.** Copy your `author_profile.md` into a-Shell's `Documents/QuestCast` (AirDrop or Files).
+  Replace the example profile from `qc init` before your first run; it won't produce a draft.
+- **Search.** Native only (`--search native`). a-Shell's Python has Expat 2.6.4, and `--search rss`
+  needs 2.7.2 or newer to protect against entity-expansion attacks in feed XML. Keep a-Shell in
+  front while it runs.
+- **Shortcut.** In Shortcuts, a Text action with three lines (the two `export` lines above, then
+  `qc --search native --random-topic`), followed by a-Shell's Execute Command action. To put it on the
+  Home Screen, follow Apple's guide:
+  https://support.apple.com/guide/shortcuts/add-a-shortcut-to-the-home-screen-apd735880972/ios
+- **History.** The phone keeps its own history, so duplicate checks don't span the phone and a
+  computer.
 
 ## Optional extras
 

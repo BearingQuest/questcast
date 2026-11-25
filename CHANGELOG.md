@@ -4,6 +4,24 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+### Fixed
+
+- A failure writing `run.log` no longer raises a second error on top of the first: it is one line
+  on stderr, and the original error still shows. If the data folder can't be created, `qc` says
+  which folder, why, and that `QC_POST_DATA_DIR` moves it, with no traceback. A data folder that
+  `qc` creates is mode 700; an existing one keeps its mode. (Found in a-Shell on iOS, where only
+  `Documents` is writable.)
+- The missing-key message no longer tells you to `echo` the key into the file. It gives the
+  private-first steps: create the file with `umask 077`, then add the key in an editor.
+- `qc` refuses to run while the profile still has the example's placeholders (or its unedited
+  Beat), naming the profile and the sections to fill in. Before, the placeholders went to the
+  provider ("Searching: (topic)", then a Groq 400).
+
+### Documentation
+
+- README: an "iPhone (a-Shell)" section with the setup tested on 25 Nov 2026, and a platforms line
+  under Requirements.
+
 ## 3.1.1
 
 ### Fixed

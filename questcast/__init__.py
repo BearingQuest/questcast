@@ -30,9 +30,8 @@ Requirements:
     The 'anthropic' extra        (only for --provider anthropic)
     Installed qc, from the clone:  uv tool install --reinstall '.[anthropic]'
     The clone's venv:               ~/.qc_post_venv/bin/pip install -e '.[anthropic]'
-                                    (or ~/.ai_post_venv)
     The pinned version is in pyproject.toml.
     pip install tweepy           (only for --post; the clone's venv only)
 
-Credentials are read from ~/.qc_post_env (or ~/.ai_post_env) — see README.md.
+Credentials are read from ~/.qc_post_env — see README.md.
 """

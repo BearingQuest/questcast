@@ -1,9 +1,9 @@
-"""PR B: QC_POST_* names, ~/QuestCast, ~/.qc_post_env, with the old names read as
-fallbacks for one release. Every branch of the resolution rules, the stderr
-notices, and qc init for each folder layout. HOME is always a temporary
+"""QuestCast 4: only QC_POST_* names, ~/QuestCast and ~/.qc_post_env are read. An
+old name (AI_POST_*, ~/XPosts, ~/.ai_post_env) is never read; the old-name check
+stops the run instead, with names and paths only. HOME is always a temporary
 directory (conftest.isolated)."""
 
-import json
+import builtins
 import os
 import sys
 from importlib import resources
@@ -11,12 +11,14 @@ from pathlib import Path
 
 import pytest
 
-from questcast import cli, config
-from tests.conftest import MODEL_OUTPUT, SENTINEL_KEY, completion
+from questcast import cli, config, storage
+from tests.conftest import SENTINEL_KEY
 
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 EXAMPLE = resources.files("questcast").joinpath(config.EXAMPLE_PROFILE).read_bytes()
 PROFILE = "## Topics\n- Cloud\n\n## Beat\nPractitioners.\n\n## Voice\nPlain.\n"
+
+MOVE_DATA = "~/XPosts is no longer read; move it with: mv ~/XPosts ~/QuestCast"
+MOVE_KEYS = "~/.ai_post_env is no longer read; rename it with: mv ~/.ai_post_env ~/.qc_post_env"
 
 
 @pytest.fixture
@@ -29,332 +31,336 @@ def home(tmp_path):
 @pytest.fixture
 def defaults(monkeypatch):
     """No path override variables, so the default locations decide."""
-    for prefix in ("QC_POST_", "AI_POST_"):
-        monkeypatch.delenv(f"{prefix}DATA_DIR", raising=False)
-        monkeypatch.delenv(f"{prefix}ENV_FILE", raising=False)
+    monkeypatch.delenv("QC_POST_DATA_DIR")
+    monkeypatch.delenv("QC_POST_ENV_FILE")
 
 
 def run_cli(monkeypatch, *args):
     monkeypatch.setattr(sys, "argv", ["qc", *args])
-    cli.run()
+    cli.main()
 
 
-def stderr_lines(capsys):
-    return [line for line in capsys.readouterr().err.splitlines() if line]
-
-
-# ---------------------------------------------------------------------------
-# Rule 1: variables
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("new", "old", "expected"),
-    [
-        ("30", None, 30.0),  # new only
-        (None, "40", 40.0),  # old only
-        ("30", "40", 30.0),  # both: new wins
-        (None, None, config.DEFAULT_PROVIDER_TIMEOUT),  # neither
-        ("", "40", config.DEFAULT_PROVIDER_TIMEOUT),  # set but empty still counts as set
-    ],
-)
-def test_variable_resolution(monkeypatch, new, old, expected):
-    if new is not None:
-        monkeypatch.setenv("QC_POST_PROVIDER_TIMEOUT", new)
-    if old is not None:
-        monkeypatch.setenv("AI_POST_PROVIDER_TIMEOUT", old)
-
-    assert config.provider_timeout() == expected
-
-
-@pytest.mark.parametrize(
-    ("new", "old", "expected"),
-    [("groq", None, "groq"), (None, "anthropic", "anthropic"), ("groq", "anthropic", "groq")],
-)
-def test_string_setting_resolution(monkeypatch, new, old, expected):
-    if new is not None:
-        monkeypatch.setenv("QC_POST_PROVIDER", new)
-    if old is not None:
-        monkeypatch.setenv("AI_POST_PROVIDER", old)
-
-    assert config.provider_setting() == expected
-
-
-def test_whole_number_setting_falls_back_and_names_the_new_variable(monkeypatch):
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "123")
-    assert config.token_budget() == 123
-
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "zero")
+def refused(monkeypatch, capsys, *args):
+    """Run qc expecting the old-name stop; return its stderr."""
     with pytest.raises(SystemExit) as exc:
-        config.token_budget()
-    assert "QC_POST_TOKEN_BUDGET must be a whole number" in exc.value.code
-
-
-def test_variable_notices(monkeypatch):
-    assert config.legacy_notices() == []
-
-    monkeypatch.setenv("QC_POST_SEARCH", "rss")
-    assert config.legacy_notices() == []  # new names alone are silent
-
-    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_PROVIDER is deprecated; rename it to QC_POST_*. "
-        "Old names stop working after the next release."
-    ]
-
-    monkeypatch.setenv("AI_POST_MODEL", "x")  # not a setting: never listed
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "9")
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_PROVIDER, AI_POST_TOKEN_BUDGET are deprecated; rename them to "
-        "QC_POST_*. Old names stop working after the next release."
-    ]
-
-    monkeypatch.setenv("QC_POST_PROVIDER", "groq")
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_TOKEN_BUDGET is deprecated; rename it to QC_POST_*. "
-        "Old names stop working after the next release.",
-        "questcast: AI_POST_PROVIDER is ignored because QC_POST_PROVIDER is set",
-    ]
-
-
-def test_new_name_in_the_env_file_beats_old_name_in_the_shell(monkeypatch, tmp_path):
-    env_file = tmp_path / "my.env"
-    env_file.write_text("QC_POST_PROVIDER=anthropic\nAI_POST_RSS_PER_FEED=7\n")
-    monkeypatch.setenv("QC_POST_ENV_FILE", str(env_file))
-    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
-
-    config.load_env_file()
-
-    assert config.provider_setting() == "anthropic"
-    assert config.rss_per_feed() == 7  # an old name in the file works too
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_RSS_PER_FEED is deprecated; rename it to QC_POST_*. "
-        "Old names stop working after the next release.",
-        "questcast: AI_POST_PROVIDER is ignored because QC_POST_PROVIDER is set",
-    ]
-
-
-def test_shell_still_beats_the_file_for_the_same_name(monkeypatch, tmp_path):
-    env_file = tmp_path / "my.env"
-    env_file.write_text("QC_POST_PROVIDER=anthropic\n")
-    monkeypatch.setenv("QC_POST_ENV_FILE", str(env_file))
-    monkeypatch.setenv("QC_POST_PROVIDER", "groq")
-
-    config.load_env_file()
-
-    assert config.provider_setting() == "groq"
-
-
-# ---------------------------------------------------------------------------
-# Rule 2: the credentials file
-# ---------------------------------------------------------------------------
-
-
-def test_env_file_override_variables_win_over_the_default_files(monkeypatch, home, defaults):
-    (home / ".qc_post_env").write_text("")
-    (home / ".ai_post_env").write_text("")
-
-    monkeypatch.setenv("AI_POST_ENV_FILE", "/old/override")
-    assert config.env_file() == Path("/old/override")  # AI_POST_ENV_FILE exists today
-
-    monkeypatch.setenv("QC_POST_ENV_FILE", "/new/override")
-    assert config.env_file() == Path("/new/override")
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_ENV_FILE is ignored because QC_POST_ENV_FILE is set"
-    ]
-
-
-def test_env_file_override_makes_the_default_file_notices_moot(monkeypatch, home):
-    (home / ".ai_post_env").write_text("")  # QC_POST_ENV_FILE is set by conftest
-
-    assert config.legacy_notices() == []
-
-
-def test_env_file_new_only(home, defaults):
-    (home / ".qc_post_env").write_text("")
-
-    assert config.env_file() == home / ".qc_post_env"
-    assert config.legacy_notices() == []
-
-
-def test_env_file_old_only(home, defaults):
-    (home / ".ai_post_env").write_text("")
-
-    assert config.env_file() == home / ".ai_post_env"
-    assert config.legacy_notices() == [
-        "questcast: using ~/.ai_post_env; rename it with: mv ~/.ai_post_env ~/.qc_post_env"
-    ]
-
-
-def test_env_file_both_new_wins_and_old_is_never_opened(monkeypatch, home, defaults):
-    (home / ".qc_post_env").write_text("QC_POST_SEARCH=rss\n")
-    (home / ".ai_post_env").write_text(
-        f"AI_POST_PROVIDER=openai-compat\nGROQ_API_KEY={SENTINEL_KEY}\n"
-    )
-    opened = []
-    real_read_text = Path.read_text
-
-    def spy(self, *args, **kwargs):
-        opened.append(self)
-        return real_read_text(self, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "read_text", spy)
-
-    config.load_env_file()
-
-    assert config.env_file() == home / ".qc_post_env"
-    assert opened == [home / ".qc_post_env"]
-    assert config.search_setting() == "rss"
-    assert config.provider_setting() == ""  # nothing from the old file
-    assert config.legacy_notices() == [
-        "questcast: ~/.ai_post_env is ignored because ~/.qc_post_env exists"
-    ]
-
-
-def test_env_file_neither_defaults_to_the_new_name(home, defaults):
-    assert config.env_file() == home / ".qc_post_env"
-    assert config.legacy_notices() == []
-
-
-def test_env_file_location_cannot_be_set_inside_either_file(monkeypatch, home, defaults):
-    (home / ".qc_post_env").write_text(
-        f"QC_POST_ENV_FILE={home / 'a'}\nAI_POST_ENV_FILE={home / 'b'}\n"
-    )
-
-    config.load_env_file()
-
-    assert config.env_file() == home / ".qc_post_env"
-    assert "QC_POST_ENV_FILE" not in os.environ
-    assert "AI_POST_ENV_FILE" not in os.environ
-
-
-# ---------------------------------------------------------------------------
-# Rule 3: the data folder
-# ---------------------------------------------------------------------------
-
-
-def test_data_dir_override_variables(monkeypatch, home, defaults):
-    (home / "QuestCast").mkdir()
-    (home / "XPosts").mkdir()
-
-    monkeypatch.setenv("AI_POST_DATA_DIR", "/old/data")
-    assert config.data_dir() == Path("/old/data")  # AI_POST_DATA_DIR exists today
-
-    monkeypatch.setenv("QC_POST_DATA_DIR", "/new/data")
-    assert config.data_dir() == Path("/new/data")
-    assert config.legacy_notices() == [
-        "questcast: AI_POST_DATA_DIR is ignored because QC_POST_DATA_DIR is set"
-    ]
-
-
-def test_data_dir_new_only(home, defaults):
-    (home / "QuestCast").mkdir()
-
-    assert config.data_dir() == home / "QuestCast"
-    assert config.legacy_notices() == []
-
-
-def test_data_dir_old_only(home, defaults):
-    (home / "XPosts").mkdir()
-
-    assert config.data_dir() == home / "XPosts"
-    assert config.legacy_notices() == [
-        "questcast: using ~/XPosts; move it with: mv ~/XPosts ~/QuestCast"
-    ]
-
-
-def test_data_dir_both_new_wins_and_old_is_untouched(home, defaults):
-    (home / "QuestCast").mkdir()
-    (home / "XPosts").mkdir()
-    (home / "XPosts" / "history.json").write_text("[]")
-    before = sorted(p.name for p in home.rglob("*"))
-
-    assert config.data_dir() == home / "QuestCast"
-    assert config.legacy_notices() == ["questcast: ~/XPosts is ignored because ~/QuestCast exists"]
-    assert sorted(p.name for p in home.rglob("*")) == before
-
-
-def test_data_dir_neither_defaults_to_the_new_name_without_creating_it(home, defaults):
-    assert config.data_dir() == home / "QuestCast"
-    assert config.legacy_notices() == []
-    assert not (home / "QuestCast").exists()
-
-
-# ---------------------------------------------------------------------------
-# Rule 4: qc init
-# ---------------------------------------------------------------------------
+        run_cli(monkeypatch, *args)
+    assert exc.value.code == 1  # int code: main() logs only message exits
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    return captured.err
 
 
 def tree(root):
     return sorted(str(p.relative_to(root)) for p in root.rglob("*"))
 
 
-def test_init_neither_folder_creates_questcast_with_mode_700(monkeypatch, home, defaults, capsys):
-    run_cli(monkeypatch, "init")
-
-    assert (home / "QuestCast" / "author_profile.md").read_bytes() == EXAMPLE
-    assert (home / "QuestCast").stat().st_mode & 0o777 == 0o700
-    assert not (home / "XPosts").exists()
-    captured = capsys.readouterr()
-    assert captured.err == ""
-    assert "~/.qc_post_env" in captured.out
+# ---------------------------------------------------------------------------
+# Only QC_POST_* is read
+# ---------------------------------------------------------------------------
 
 
-def test_init_only_new_folder(monkeypatch, home, defaults, capsys):
+@pytest.mark.parametrize("name", config.SETTING_NAMES)
+def test_setting_reads_only_the_new_name(monkeypatch, name):
+    monkeypatch.delenv(f"QC_POST_{name}", raising=False)  # conftest sets two of them
+    monkeypatch.setenv(f"AI_POST_{name}", "old")
+    assert config.setting(name) is None
+
+    monkeypatch.setenv(f"QC_POST_{name}", "new")
+    assert config.setting(name) == "new"
+
+
+def test_an_empty_new_name_still_counts_as_set(monkeypatch):
+    monkeypatch.setenv("QC_POST_PROVIDER", "")
+    assert config.setting("PROVIDER") == ""
+
+
+def test_old_values_are_not_applied(monkeypatch):
+    monkeypatch.setenv("AI_POST_PROVIDER", "anthropic")
+    monkeypatch.setenv("AI_POST_PROVIDER_TIMEOUT", "5")
+    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "1")
+
+    assert config.provider_setting() == ""
+    assert config.provider_timeout() == config.DEFAULT_PROVIDER_TIMEOUT
+    assert config.token_budget() == config.DEFAULT_TOKEN_BUDGET
+
+
+def test_default_locations_are_the_new_ones(home, defaults):
+    (home / "XPosts").mkdir()
+    (home / ".ai_post_env").write_text("")
+
+    assert config.data_dir() == home / "QuestCast"
+    assert config.env_file() == home / ".qc_post_env"
+    assert not (home / "QuestCast").exists()  # nothing created
+
+
+def test_overrides_win(monkeypatch, home, defaults):
+    monkeypatch.setenv("QC_POST_DATA_DIR", "/new/data")
+    monkeypatch.setenv("QC_POST_ENV_FILE", "/new/env")
+
+    assert config.data_dir() == Path("/new/data")
+    assert config.env_file() == Path("/new/env")
+
+
+def test_new_file_values_load_and_the_shell_still_wins(monkeypatch, tmp_path):
+    env_file = tmp_path / "my.env"
+    env_file.write_text("QC_POST_PROVIDER=anthropic\nQC_POST_SEARCH=rss\n")
+    monkeypatch.setenv("QC_POST_ENV_FILE", str(env_file))
+    monkeypatch.setenv("QC_POST_PROVIDER", "groq")
+    monkeypatch.setenv("QC_POST_SEARCH", "x")  # registered, so monkeypatch restores it
+    monkeypatch.delenv("QC_POST_SEARCH")
+
+    config.load_env_file()
+
+    assert config.provider_setting() == "groq"
+    assert config.search_setting() == "rss"
+
+
+def test_env_file_location_cannot_be_set_inside_the_file(monkeypatch, home, defaults):
+    (home / ".qc_post_env").write_text(f"QC_POST_ENV_FILE={home / 'a'}\n")
+
+    config.load_env_file()
+
+    assert config.env_file() == home / ".qc_post_env"
+    assert "QC_POST_ENV_FILE" not in os.environ
+
+
+# ---------------------------------------------------------------------------
+# 2a: AI_POST_<NAME> set anywhere
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", config.SETTING_NAMES)
+def test_each_old_setting_name_is_found(monkeypatch, name):
+    monkeypatch.setenv(f"AI_POST_{name}", "x")
+
+    assert config.old_name_problems() == [
+        f"AI_POST_{name} is no longer read; rename it to QC_POST_{name}"
+    ]
+
+
+def test_old_and_new_both_set_still_stops(monkeypatch):
+    monkeypatch.setenv("QC_POST_PROVIDER", "groq")
+    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
+
+    assert config.old_name_problems() == [
+        "AI_POST_PROVIDER is no longer read; rename it to QC_POST_PROVIDER"
+    ]
+
+
+def test_an_empty_old_name_stops(monkeypatch):
+    monkeypatch.setenv("AI_POST_SEARCH", "")
+
+    assert len(config.old_name_problems()) == 1
+
+
+def test_a_name_that_is_not_a_setting_is_not_a_problem(monkeypatch):
+    monkeypatch.setenv("AI_POST_MODEL", "x")
+
+    assert config.old_name_problems() == []
+
+
+def test_an_old_name_in_the_env_file_stops_and_is_not_applied(monkeypatch, tmp_path, capsys):
+    env_file = tmp_path / "my.env"
+    env_file.write_text("QC_POST_PROVIDER=anthropic\nAI_POST_RSS_PER_FEED=7\nAI_POST_ENV_FILE=x\n")
+    monkeypatch.setenv("QC_POST_ENV_FILE", str(env_file))
+    for key in ("AI_POST_RSS_PER_FEED", "AI_POST_ENV_FILE", "QC_POST_PROVIDER"):
+        monkeypatch.setenv(key, "x")  # registered, so monkeypatch removes what the file adds
+        monkeypatch.delenv(key)
+
+    config.load_env_file()
+
+    assert config.rss_per_feed() == config.DEFAULT_RSS_PER_FEED  # never applied
+    assert config.old_name_problems() == [
+        "AI_POST_RSS_PER_FEED is no longer read; rename it to QC_POST_RSS_PER_FEED",
+        "AI_POST_ENV_FILE is no longer read; rename it to QC_POST_ENV_FILE",
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 2b, 2c: the old default paths
+# ---------------------------------------------------------------------------
+
+
+def test_old_data_folder_alone_stops(home, defaults):
+    (home / "XPosts").mkdir()
+
+    assert config.old_name_problems() == [MOVE_DATA + " (or set QC_POST_DATA_DIR)"]
+
+
+def test_old_key_file_alone_stops(home, defaults):
+    (home / ".ai_post_env").write_text("")
+
+    assert config.old_name_problems() == [MOVE_KEYS + " (or set QC_POST_ENV_FILE)"]
+
+
+def test_both_new_and_old_exist_is_quiet(home, defaults):
+    (home / "XPosts").mkdir()
     (home / "QuestCast").mkdir()
+    (home / ".ai_post_env").write_text("")
+    (home / ".qc_post_env").write_text("")
 
-    run_cli(monkeypatch, "init")
-
-    assert (home / "QuestCast" / "author_profile.md").exists()
-    assert not (home / "XPosts").exists()
-    assert capsys.readouterr().err == ""
+    assert config.old_name_problems() == []
 
 
-def test_init_only_old_folder_with_profile_refuses_and_prints_the_move(
-    monkeypatch, home, defaults, capsys
-):
+def test_a_path_override_makes_the_old_default_irrelevant(monkeypatch, home):
+    (home / "XPosts").mkdir()  # QC_POST_DATA_DIR and QC_POST_ENV_FILE are set by conftest
+    (home / ".ai_post_env").write_text("")
+
+    assert config.old_name_problems() == []
+
+
+def test_each_path_override_only_covers_its_own_path(monkeypatch, home, defaults):
+    (home / "XPosts").mkdir()
+    (home / ".ai_post_env").write_text("")
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(home / "d"))
+
+    assert config.old_name_problems() == [MOVE_KEYS + " (or set QC_POST_ENV_FILE)"]
+
+
+def test_the_data_dir_override_can_come_from_the_env_file(monkeypatch, home, defaults):
+    (home / "XPosts").mkdir()
+    (home / ".qc_post_env").write_text(f"QC_POST_DATA_DIR={home / 'd'}\n")
+    monkeypatch.setenv("QC_POST_DATA_DIR", "x")  # registered, so it is removed afterwards
+    monkeypatch.delenv("QC_POST_DATA_DIR")
+
+    config.load_env_file()
+
+    assert config.old_name_problems() == []
+
+
+def test_neither_old_path_is_quiet(home, defaults):
+    assert config.old_name_problems() == []
+
+
+def test_everything_is_listed_in_one_message(monkeypatch, home, defaults, capsys):
+    (home / "XPosts").mkdir()
+    (home / ".ai_post_env").write_text("")
+    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
+    monkeypatch.setenv("AI_POST_DATA_DIR", "/old")
+
+    err = refused(monkeypatch, capsys, "--list-topics")
+
+    lines = err.splitlines()
+    assert lines[0].startswith("questcast: old names found")
+    problems = [line for line in lines if line.startswith("  - ")]
+    assert problems == [
+        "  - AI_POST_PROVIDER is no longer read; rename it to QC_POST_PROVIDER",
+        "  - AI_POST_DATA_DIR is no longer read; rename it to QC_POST_DATA_DIR",
+        f"  - {MOVE_DATA} (or set QC_POST_DATA_DIR)",
+        f"  - {MOVE_KEYS} (or set QC_POST_ENV_FILE)",
+    ]
+    assert 'Upgrading to 4.0" in the README' in lines[-1]
+
+
+# ---------------------------------------------------------------------------
+# What the stop touches: nothing
+# ---------------------------------------------------------------------------
+
+
+def test_values_are_never_printed(monkeypatch, home, defaults, capsys):
+    (home / ".ai_post_env").write_text(f"GROQ_API_KEY={SENTINEL_KEY}\n")
+    for name in config.SETTING_NAMES:
+        monkeypatch.setenv(f"AI_POST_{name}", SENTINEL_KEY)
+
+    err = refused(monkeypatch, capsys, "--topic", "x")
+
+    assert SENTINEL_KEY not in err
+    assert err.count("is no longer read") == len(config.SETTING_NAMES) + 1
+
+
+def test_old_paths_are_never_opened_read_or_listed(monkeypatch, home, defaults, capsys):
+    old_dir, old_keys = home / "XPosts", home / ".ai_post_env"
+    old_dir.mkdir()
+    (old_dir / "history.json").write_text("[]")
+    old_keys.write_text(f"GROQ_API_KEY={SENTINEL_KEY}\n")
+    touched = []
+
+    def guard(real):
+        def wrapper(self, *args, **kwargs):
+            if old_dir in (self, *self.parents) or self == old_keys:
+                touched.append(self)
+            return real(self, *args, **kwargs)
+
+        return wrapper
+
+    for method in ("open", "read_text", "read_bytes", "iterdir", "unlink", "rename", "chmod"):
+        monkeypatch.setattr(Path, method, guard(getattr(Path, method)))
+    real_open = builtins.open
+
+    def spy_open(file, *args, **kwargs):
+        if str(file).startswith((str(old_dir), str(old_keys))):
+            touched.append(file)
+        return real_open(file, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", spy_open)
+
+    refused(monkeypatch, capsys, "--list-topics")
+
+    assert touched == []
+    assert old_keys.read_text() == f"GROQ_API_KEY={SENTINEL_KEY}\n"
+    assert tree(old_dir) == ["history.json"]
+
+
+@pytest.mark.parametrize(
+    "args", [(), ("--topic", "x"), ("--list-topics",), ("--history",), ("init",)]
+)
+def test_every_command_stops_and_writes_nothing(monkeypatch, home, defaults, capsys, args):
     (home / "XPosts").mkdir()
     (home / "XPosts" / "author_profile.md").write_text(PROFILE)
     before = tree(home)
 
+    err = refused(monkeypatch, capsys, *args)
+
+    assert MOVE_DATA in err
+    assert tree(home) == before  # no ~/QuestCast, no run.log, nothing moved
+    assert (home / "XPosts" / "author_profile.md").read_text() == PROFILE
+
+
+def test_the_stop_writes_no_run_log_and_does_not_create_the_data_dir(monkeypatch, tmp_path, capsys):
+    data = tmp_path / "data"
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(data))
+    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
+    monkeypatch.setattr(storage, "RUN_VIA", "")
+
+    refused(monkeypatch, capsys, "--topic", "x")
+
+    assert not data.exists()
+
+
+def test_no_provider_is_built(monkeypatch, capsys):
+    def fail(*args, **kwargs):
+        pytest.fail("a provider was selected or built")
+
+    monkeypatch.setattr(cli, "select_provider", fail)
+    monkeypatch.setattr(cli, "make_provider", fail)
+    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
+
+    refused(monkeypatch, capsys, "--topic", "x")
+
+
+def test_help_still_works_with_old_names_set(monkeypatch, capsys):
+    monkeypatch.setenv("AI_POST_PROVIDER", "groq")
+    monkeypatch.setattr(sys, "argv", ["qc", "--help"])
+
     with pytest.raises(SystemExit) as exc:
-        run_cli(monkeypatch, "init")
+        cli.main()
 
-    assert exc.value.code == 1
-    err = capsys.readouterr().err
-    assert "using ~/XPosts; move it with: mv ~/XPosts ~/QuestCast" in err
-    assert "already exists" in err
-    assert (home / "XPosts" / "author_profile.md").read_text() == PROFILE
-    assert tree(home) == before  # no QuestCast, no run.log, nothing moved
+    assert exc.value.code == 0
+    assert "usage:" in capsys.readouterr().out
 
 
-def test_init_only_old_folder_without_profile_writes_into_it(monkeypatch, home, defaults, capsys):
-    (home / "XPosts").mkdir()
-
-    run_cli(monkeypatch, "init")
-
-    assert (home / "XPosts" / "author_profile.md").read_bytes() == EXAMPLE
-    assert not (home / "QuestCast").exists()
-    assert "mv ~/XPosts ~/QuestCast" in capsys.readouterr().err
-
-
-def test_init_both_folders_uses_the_new_one_and_leaves_the_old_one(
-    monkeypatch, home, defaults, capsys
-):
+def test_new_names_alone_run_quietly(monkeypatch, home, defaults, profile_file, capsys):
     (home / "QuestCast").mkdir()
-    (home / "XPosts").mkdir()
-    (home / "XPosts" / "author_profile.md").write_text(PROFILE)
+    (home / "QuestCast" / "author_profile.md").write_text(profile_file.read_text())
+    (home / ".qc_post_env").write_text("")
 
-    run_cli(monkeypatch, "init")
+    run_cli(monkeypatch, "--list-topics")
 
-    assert (home / "QuestCast" / "author_profile.md").read_bytes() == EXAMPLE
-    assert (home / "XPosts" / "author_profile.md").read_text() == PROFILE
-    assert tree(home / "XPosts") == ["author_profile.md"]
-    assert "~/XPosts is ignored because ~/QuestCast exists" in capsys.readouterr().err
+    assert capsys.readouterr().err == ""
 
 
 # ---------------------------------------------------------------------------
-# Rule 5: notices
+# Path display
 # ---------------------------------------------------------------------------
 
 
@@ -366,59 +372,14 @@ def test_shown_strips_control_characters_and_abbreviates_home(home):
     assert dirty == "/a/ [31mb c d e f"
 
 
-def test_notices_in_a_home_with_control_characters_are_clean(
+def test_a_home_with_control_characters_gives_a_clean_message(
     monkeypatch, tmp_path, defaults, capsys
 ):
     weird = tmp_path / "ho\x1b[31mme\nx"
     (weird / "XPosts").mkdir(parents=True)
-    (weird / "XPosts" / "author_profile.md").write_text(PROFILE)
     monkeypatch.setenv("HOME", str(weird))
 
-    run_cli(monkeypatch, "--list-topics")
+    err = refused(monkeypatch, capsys, "--list-topics")
 
-    err = capsys.readouterr().err
-    assert err.strip() == "questcast: using ~/XPosts; move it with: mv ~/XPosts ~/QuestCast"
     assert "\x1b" not in err
-
-
-def test_a_run_prints_each_notice_once_and_leaks_nothing(
-    monkeypatch, web, tmp_path, home, defaults, profile_file, capsys
-):
-    (home / "XPosts").mkdir()
-    (home / "XPosts" / "author_profile.md").write_text(profile_file.read_text())
-    (home / ".ai_post_env").write_text(
-        f"export GROQ_API_KEY={SENTINEL_KEY}\nAI_POST_PROVIDER=groq\nAI_POST_SEARCH=native\n"
-    )
-    monkeypatch.setenv("AI_POST_TOKEN_BUDGET", "7000")
-    web.add(GROQ_URL, completion(MODEL_OUTPUT))
-
-    run_cli(monkeypatch, "--topic", "Cloud")
-
-    captured = capsys.readouterr()
-    assert [line for line in captured.err.splitlines() if line.startswith("questcast:")] == [
-        "questcast: AI_POST_PROVIDER, AI_POST_SEARCH, AI_POST_TOKEN_BUDGET are deprecated; "
-        "rename them to QC_POST_*. Old names stop working after the next release.",
-        "questcast: using ~/.ai_post_env; rename it with: mv ~/.ai_post_env ~/.qc_post_env",
-        "questcast: using ~/XPosts; move it with: mv ~/XPosts ~/QuestCast",
-    ]
-    data = home / "XPosts"
-    files = {p.name: p.read_text() for p in data.iterdir() if p.is_file()}
-    assert set(files) == {"author_profile.md", "history.json", "drafts.md", "run.log"}
-    written = captured.out + captured.err + "".join(files.values())
-    assert SENTINEL_KEY not in written
-    for name in ("history.json", "drafts.md", "run.log"):
-        assert "questcast:" not in files[name]
-        assert "deprecated" not in files[name]
-    assert json.loads(files["history.json"])[-1]["provider"] == "groq"
-    assert not (home / "QuestCast").exists()
-    assert (home / ".ai_post_env").read_text().count(SENTINEL_KEY) == 1  # not moved or edited
-
-
-def test_no_notices_when_only_new_names_are_used(monkeypatch, home, defaults, profile_file, capsys):
-    (home / "QuestCast").mkdir()
-    (home / "QuestCast" / "author_profile.md").write_text(profile_file.read_text())
-    (home / ".qc_post_env").write_text("QC_POST_SEARCH=native\n")
-
-    run_cli(monkeypatch, "--list-topics")
-
-    assert capsys.readouterr().err == ""
+    assert MOVE_DATA in err

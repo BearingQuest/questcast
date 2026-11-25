@@ -20,7 +20,6 @@ def post_to_x(post: str) -> str:
     except ImportError:
         raise SystemExit(
             "\n--post needs tweepy. Install it with:\n\n  ~/.qc_post_venv/bin/pip install tweepy\n"
-            "  (or ~/.ai_post_venv)\n"
         ) from None
 
     creds = config.x_credentials()

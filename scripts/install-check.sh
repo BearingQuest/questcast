@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # R42: build the package, install the wheel into a fresh virtual environment
-# with a throwaway HOME and data directory, and check qc --help, xgp --help and qc init.
+# with a throwaway HOME and data directory, and check qc --help and qc init, and that no xgp command is installed.
 set -euo pipefail
 
 # An explicit template: macOS mktemp -d ignores $TMPDIR, and the sandbox only lets us write there.
@@ -15,7 +15,6 @@ uv pip install --quiet --python "$tmp/venv/bin/python" dist/*.whl
 export HOME="$tmp/home" QC_POST_DATA_DIR="$tmp/data"
 mkdir "$HOME"
 qc="$tmp/venv/bin/qc"
-xgp="$tmp/venv/bin/xgp"
 python="$tmp/venv/bin/python"
 profile="$QC_POST_DATA_DIR/author_profile.md"
 
@@ -49,7 +48,7 @@ print(mode, digest)
 }
 
 "$qc" --help
-"$xgp" --help
+[ ! -e "$tmp/venv/bin/xgp" ] || { echo "::error::the xgp command is still installed"; exit 1; }
 "$qc" init
 
 read -r dir_mode _ <<<"$(inspect "$QC_POST_DATA_DIR")"

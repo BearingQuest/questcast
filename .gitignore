@@ -4,7 +4,7 @@
 *.env
 .env*
 
-# Personal profile and generated output (live in ~/QuestCast by default; ~/XPosts for now)
+# Personal profile and generated output (live in ~/QuestCast by default)
 author_profile.md
 drafts.md
 history.json

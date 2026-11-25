@@ -176,15 +176,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def refuse_old_names() -> None:
+    """Stop, before anything is read or written, if an old name is in use.
+
+    Exits with the int code 1 (not a message): main() logs a string exit to
+    run.log, which would create the data folder this check exists to protect.
+    """
+    problems = config.old_name_problems()
+    if not problems:
+        return
+    print("questcast: old names found, and QuestCast 4 no longer reads them:", file=sys.stderr)
+    for problem in problems:
+        print(f"  - {problem}", file=sys.stderr)
+    print(
+        'See "Upgrading to 4.0" in the README. Nothing was run or written.',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+
 def run() -> None:
     """One run: parse the flags, then draft (and optionally publish)."""
     # Loaded first, so QC_POST_DATA_DIR set in the env file applies to the
     # --profile default as well as to the history, drafts and run log.
     config.load_env_file()
-    for notice in config.legacy_notices():
-        print(notice, file=sys.stderr)
 
     args = build_parser().parse_args()
+    refuse_old_names()
 
     if args.command == "init":
         init()
@@ -306,12 +324,3 @@ def main() -> None:
         # that is the useful artifact for an unknown bug.
         log_run(f"FAILED — {type(exc).__name__}: {exc}{storage.RUN_TOKENS}")
         raise
-
-
-XGP_NOTICE = "xgp is now qc; xgp will be removed after the next release"
-
-
-def xgp_main() -> None:
-    """Entry point for the old xgp command: one notice on stderr, then exactly qc."""
-    print(XGP_NOTICE, file=sys.stderr)
-    main()

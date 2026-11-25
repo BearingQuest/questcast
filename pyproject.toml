@@ -1,6 +1,6 @@
 [project]
 name = "questcast"
-version = "3.1.1"
+version = "4.0.0"
 description = "Drafts X and LinkedIn posts from an author profile and a topic chosen at run time."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -16,7 +16,6 @@ anthropic = ["anthropic==2.9.0"]
 
 [project.scripts]
 qc = "questcast.cli:main"
-xgp = "questcast.cli:xgp_main"
 
 [build-system]
 requires = ["uv_build==0.13.8"]

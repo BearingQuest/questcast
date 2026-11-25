@@ -65,8 +65,6 @@ REQUIRED_DENY = [
     "Bash(git * pull -r*)",
     "Bash(git * pull * -r*)",
     # posting is public and can't be undone: the publish flags, whichever way qc is started
-    "Bash(*xgp --post*)",
-    "Bash(*xgp * --post*)",
     "Bash(*qc --post*)",
     "Bash(*qc * --post*)",
     "Bash(*daily_post.py --post*)",
@@ -139,14 +137,12 @@ OPTION_FIRST_RELEASE_DENY = [
 ]
 
 REQUIRED_READ_DENY = [
-    "Read(~/.ai_post_env)",
     "Read(~/.qc_post_env)",
     "Read(~/.aws/**)",
     "Read(~/.ssh/**)",
     "Read(~/.config/gh/**)",
     "Read(~/career-workspace/**)",
     "Read(~/QuestCast/**)",
-    "Read(~/XPosts/**)",
     "Read(./.env)",
     "Read(./.env.*)",
 ]
@@ -180,7 +176,6 @@ REQUIRED_ASK = [
     "Bash(python)",
     "Bash(python *)",
     # any command whose text names a credential file
-    "Bash(*.ai_post_env*)",
     "Bash(*.qc_post_env*)",
 ]
 
@@ -199,14 +194,12 @@ SANDBOX_FLAGS = {
 }
 
 SANDBOX_DENY_READ = {
-    "~/.ai_post_env",
     "~/.qc_post_env",
     "~/.aws",
     "~/.ssh",
     "~/.config/gh",
     "~/career-workspace",
     "~/QuestCast",
-    "~/XPosts",
     "./.env",
     "./.env.*",
 }
@@ -237,10 +230,7 @@ AGENTS_GH_ALONE = [
     "Run every `gh` command on its own: no `cd`, `&&`, `;`, pipes or redirects.",
     "Only a plain `gh` call runs outside the sandbox",
 ]
-AGENTS_NEVER_READ = (
-    "**Never read `~/career-workspace`, `~/.qc_post_env`, `~/.ai_post_env`, `~/QuestCast/` or "
-    "`~/XPosts/`**"
-)
+AGENTS_NEVER_READ = "**Never read `~/career-workspace`, `~/.qc_post_env` or `~/QuestCast/`**"
 AGENTS_PR_TEMPLATE = (
     "fill in every section of `.github/pull_request_template.md`, in the same order, "
     "in the PR body."

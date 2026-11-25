@@ -27,5 +27,5 @@ Issues of particular interest:
 
 ## Supported versions
 
-Only the latest commit on `master` is supported. There are no tagged
-releases yet.
+Only the latest release is supported (4.x today). Security fixes land on
+`master` and ship in the next release, which is what users install.

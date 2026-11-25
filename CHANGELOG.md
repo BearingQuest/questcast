@@ -2,6 +2,12 @@
 
 All notable changes to this project are recorded here, newest first.
 
+## Unreleased
+
+### Documentation
+
+- README: the iPhone (a-Shell) section now records a test of 4.0.0 on 25 Nov 2026: install, --list-topics, a native draft and the Home Screen Shortcut.
+
 ## 4.0.0
 
 ### Removed

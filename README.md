@@ -210,7 +210,7 @@ Keep this file out of version control — it is personal, and it is already in
 
 ## iPhone (a-Shell)
 
-Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://holzschu.github.io/a-Shell_iOS/)
+Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.com/app/id1473805438)
 with its Python 3.13 and QuestCast 3.1.1. It is tested, not supported: CI can't run a-Shell. iPad is
 untested.
 
@@ -229,7 +229,7 @@ untested.
 - **Key.** Create `~/Documents/.qc_post_env` in an editor (`vim`) with one line,
   `GROQ_API_KEY=<your key>`. Use a separate key for the phone, so it can be revoked on its own.
 - **Profile.** Copy your `author_profile.md` into a-Shell's `Documents/QuestCast` (AirDrop or Files).
-  The example profile from `qc init` won't run: QuestCast stops and names the sections to fill in.
+  Replace the example profile from `qc init` before your first run; it won't produce a draft.
 - **Search.** Native only (`--search native`). a-Shell's Python has Expat 2.6.4, and `--search rss`
   needs 2.7.2 or newer to protect against entity-expansion attacks in feed XML. Keep a-Shell in
   front while it runs.

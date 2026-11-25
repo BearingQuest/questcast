@@ -17,6 +17,7 @@ WORKFLOWS = sorted(WORKFLOW_DIR.glob("*.yml"))
 SCORECARD = WORKFLOW_DIR / "scorecard.yml"
 REVIEW = WORKFLOW_DIR / "claude-review.yml"
 RELEASE = WORKFLOW_DIR / "release.yml"
+CI = WORKFLOW_DIR / "ci.yml"
 MAIN_RULESET = REPO_ROOT / ".github" / "rulesets" / "main.json"
 
 REQUIRED_CHECKS = {"check", "gitleaks", "semgrep", "pip-audit", "zizmor"}
@@ -302,3 +303,18 @@ def test_release_notes_come_from_a_changelog_section_with_no_unreleased_fallback
     assert 'release_notes.py "${TAG#v}" CHANGELOG.md dist/release-notes.md' in run
     assert "Unreleased" not in run
     assert "Unreleased" not in text(REPO_ROOT / "scripts" / "release_notes.py")
+
+
+def test_ci_check_job_runs_the_whole_suite_on_python_3_13():
+    """3.1.1: Python 3.13 is the supported floor, so the required `check` job (not a new
+    job: the ruleset requires the context `check`) runs pytest, frozen acceptance tests
+    included, on 3.13 in its own environment."""
+    assert "  check:" in text(CI).splitlines()
+    run = run_text(CI, "check")
+    assert "uv python install 3.13" in run
+    command = next(line for line in run.splitlines() if "--python 3.13" in line)
+    assert re.search(r"\buv run --locked --python 3.13 pytest\s*$", command)
+    assert 'UV_PROJECT_ENVIRONMENT="$RUNNER_TEMP/venv313"' in command  # not the 3.14 .venv
+    assert "tests/acceptance" not in command  # the whole suite, nothing deselected
+    assert "${{" not in run  # no expression inside a run block
+    assert run.index("make check") < run.index("--python 3.13 pytest")

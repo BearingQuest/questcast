@@ -211,7 +211,7 @@ Keep this file out of version control — it is personal, and it is already in
 ## iPhone (a-Shell)
 
 Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.com/app/id1473805438)
-with its Python 3.13 and QuestCast 4.0.0. It is tested, not supported: CI can't run a-Shell. iPad is
+with its Python 3.13 and QuestCast 3.1.1. It is tested, not supported: CI can't run a-Shell. iPad is
 untested.
 
 - **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl`.

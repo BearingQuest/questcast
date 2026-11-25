@@ -43,14 +43,12 @@ def isolated(monkeypatch, tmp_path, request):
     environments, and this fixture leaves them as they were."""
     for var in ENV_VARS:
         monkeypatch.delenv(var, raising=False)
-    # config reads these at call time, so the real ~/QuestCast, ~/XPosts and
-    # the credentials files are never touched.
-    if "acceptance" in request.node.path.parts:
-        monkeypatch.setenv("AI_POST_DATA_DIR", str(tmp_path))
-        monkeypatch.setenv("AI_POST_ENV_FILE", str(tmp_path / "no.env"))
-    else:
-        monkeypatch.setenv("QC_POST_DATA_DIR", str(tmp_path))
-        monkeypatch.setenv("QC_POST_ENV_FILE", str(tmp_path / "no.env"))
+    # config reads these at call time, so the real ~/QuestCast and the
+    # credentials file are never touched. AI_POST_* is cleared above so a
+    # developer's shell can't trip the old-name check.
+    monkeypatch.setenv("QC_POST_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("QC_POST_ENV_FILE", str(tmp_path / "no.env"))
+    if "acceptance" not in request.node.path.parts:
         monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setattr(storage, "RUN_VIA", "")
     monkeypatch.setattr(storage, "RUN_TOKENS", "")

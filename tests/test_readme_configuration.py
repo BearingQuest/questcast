@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 PACKAGE = ROOT / "questcast"
 
-PREFIXED = r"(?:QC|AI)_POST_[A-Z0-9_]+"
+PREFIXED = r"QC_POST_[A-Z0-9_]+"
 CREDENTIAL_OR_PROVIDER = (
     r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*"
     r"_(?:API_KEY|API_SECRET|ACCESS_TOKEN|ACCESS_SECRET|AUTHOR_URN|API_VERSION|MODEL|BASE_URL)"
@@ -51,13 +51,10 @@ def readme_table() -> dict[str, str]:
 
 
 def names_in_code() -> set[str]:
-    """Every variable the package names: string constants that look like one, plus the
-    QC_POST_ and AI_POST_ names that config builds from SETTING_NAMES."""
-    found = {
-        f"{prefix}{name}"
-        for name in config.SETTING_NAMES
-        for prefix in (config.NEW_PREFIX, config.OLD_PREFIX)
-    }
+    """Every variable the package reads: string constants that look like one, plus the
+    QC_POST_ names that config builds from SETTING_NAMES. The old AI_POST_ names are
+    not read, so they have no row."""
+    found = {f"{config.NEW_PREFIX}{name}" for name in config.SETTING_NAMES}
     for path in sorted(PACKAGE.glob("*.py")):
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if (
@@ -92,7 +89,7 @@ def clean_env(monkeypatch, tmp_path):
 
 def test_the_table_is_still_parsed():
     # A change of format must not leave the guard with nothing to check.
-    assert len(readme_table()) >= 30
+    assert len(readme_table()) >= 20
 
 
 def test_every_variable_the_code_reads_is_in_the_readme_table():
@@ -160,7 +157,7 @@ def test_readme_defaults_match_the_code(clean_env):
     assert not wrong, f"README default differs from the code: {wrong}"
 
 
-def test_every_variable_has_a_default_checked_here_or_is_a_legacy_name():
+def test_every_variable_has_a_default_checked_here():
     checked = {
         "QC_POST_PROVIDER",
         "QC_POST_SEARCH",
@@ -175,16 +172,12 @@ def test_every_variable_has_a_default_checked_here_or_is_a_legacy_name():
         "LINKEDIN_API_VERSION",
         *CREDENTIALS_WITH_NO_DEFAULT,
     }
-    unchecked = sorted(
-        name for name in names_in_code() if name not in checked and not name.startswith("AI_POST_")
-    )
+    unchecked = sorted(name for name in names_in_code() if name not in checked)
     assert not unchecked, (
         f"add the default of these to test_readme_defaults_match_the_code: {unchecked}"
     )
 
 
-def test_each_legacy_name_points_at_its_new_name():
-    table = readme_table()
-    for name in config.SETTING_NAMES:
-        old, new = config.OLD_PREFIX + name, config.NEW_PREFIX + name
-        assert f"`{new}`" in table[old], f"{old} should name {new} in its default cell"
+def test_the_readme_table_has_no_old_names():
+    old = sorted(name for name in readme_table() if name.startswith(config.OLD_PREFIX))
+    assert not old, f"the old names are not read, so the table must not list them: {old}"

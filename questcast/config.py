@@ -30,7 +30,7 @@ DEFAULT_PROVIDER_TIMEOUT = 120.0  # seconds, override with QC_POST_PROVIDER_TIME
 DEFAULT_RATE_LIMIT_WAIT = 60  # seconds
 RATE_LIMIT_MARGIN = 1.0  # seconds added to the provider's suggestion
 
-HTTP_USER_AGENT = "QuestCast/3 (+https://github.com/BearingQuest/questcast)"
+HTTP_USER_AGENT = "QuestCast/4 (+https://github.com/BearingQuest/questcast)"
 MAX_RESPONSE_BYTES = 2_000_000  # cap on any one provider response we read
 MAX_FEED_BYTES = 10_000_000  # feeds get their own cap; some run past 2 MB (R23)
 
@@ -69,13 +69,12 @@ EXAMPLE_PROFILE = "author_profile.example.md"
 
 NOTHING_LOST = "Nothing was saved, so today's topic is still available when you re-run."
 
-# The env file can't name its own location, so QC_POST_ENV_FILE (and the old
-# AI_POST_ENV_FILE) come only from the process environment. Everything else
-# may be set in the file.
-PROCESS_ONLY = ("QC_POST_ENV_FILE", "AI_POST_ENV_FILE")
+# The env file can't name its own location, so QC_POST_ENV_FILE comes only from
+# the process environment. Everything else may be set in the file.
+PROCESS_ONLY = ("QC_POST_ENV_FILE",)
 
-# Settings renamed from AI_POST_<NAME> to QC_POST_<NAME>. The old names are read
-# as fallbacks for one release, with a notice on stderr (legacy_notices).
+# Settings renamed from AI_POST_<NAME> to QC_POST_<NAME>. The old names are
+# never read; old_name_problems finds them so the run can stop.
 NEW_PREFIX = "QC_POST_"
 OLD_PREFIX = "AI_POST_"
 SETTING_NAMES = (
@@ -94,12 +93,8 @@ CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]+")
 
 
 def setting(name: str) -> str | None:
-    """QC_POST_<name> if set (even to an empty value), else AI_POST_<name>,
-    else None."""
-    new = NEW_PREFIX + name
-    if new in os.environ:
-        return os.environ[new]
-    return os.environ.get(OLD_PREFIX + name)
+    """QC_POST_<name> if set (even to an empty value), else None."""
+    return os.environ.get(NEW_PREFIX + name)
 
 
 def shown(path: Path) -> str:
@@ -122,78 +117,46 @@ def _override(name: str) -> Path | None:
     return None if value is None else Path(value)
 
 
-def _default_pair(new: str, old: str) -> tuple[Path, Path]:
-    return Path.home() / new, Path.home() / old
-
-
 def env_file() -> Path:
-    """QC_POST_ENV_FILE, AI_POST_ENV_FILE, ~/.qc_post_env if it exists,
-    ~/.ai_post_env if it exists, else ~/.qc_post_env. Only exists() is called,
-    so the old file is never opened while the new one is there."""
+    """QC_POST_ENV_FILE, else ~/.qc_post_env."""
     override = _override("ENV_FILE")
-    if override is not None:
-        return override
-    new, old = _default_pair(".qc_post_env", ".ai_post_env")
-    if not new.exists() and old.exists():
-        return old
-    return new
+    return Path.home() / ".qc_post_env" if override is None else override
 
 
 def data_dir() -> Path:
-    """QC_POST_DATA_DIR, AI_POST_DATA_DIR, ~/QuestCast if it exists, ~/XPosts
-    if it exists, else ~/QuestCast. Nothing is created, moved or deleted."""
+    """QC_POST_DATA_DIR, else ~/QuestCast. Nothing is created, moved or deleted."""
     override = _override("DATA_DIR")
-    if override is not None:
-        return override
-    new, old = _default_pair("QuestCast", "XPosts")
-    if not new.exists() and old.exists():
-        return old
-    return new
+    return Path.home() / "QuestCast" if override is None else override
 
 
-def legacy_notices() -> list[str]:
-    """One stderr line per old name still in use or ignored: names and paths
-    only, never values. Printed once per run by cli.run, and never written to
-    drafts.md, history.json or run.log."""
-    lines = []
-    deprecated = []
-    ignored = []
+def old_name_problems() -> list[str]:
+    """One line per old name found: names and paths only, never values.
+
+    Old names are never read, so a run that finds one stops (cli.refuse_old_names)
+    rather than carry on without a key, a provider choice or the history. Call it
+    after the env file is loaded, so AI_POST_* lines in the file are seen too.
+    Only exists() is called on the old paths: they are never opened, moved or
+    deleted. When the new path exists too, the old one is ignored quietly.
+    """
+    problems = []
     for name in SETTING_NAMES:
-        old_set = OLD_PREFIX + name in os.environ
-        if old_set and NEW_PREFIX + name in os.environ:
-            ignored.append(OLD_PREFIX + name)
-        elif old_set:
-            deprecated.append(OLD_PREFIX + name)
-    if deprecated:
-        many = len(deprecated) > 1
-        lines.append(
-            f"questcast: {', '.join(deprecated)} {'are' if many else 'is'} deprecated; "
-            f"rename {'them' if many else 'it'} to QC_POST_*. "
-            "Old names stop working after the next release."
-        )
-    for old_name in ignored:
-        new_name = NEW_PREFIX + old_name[len(OLD_PREFIX) :]
-        lines.append(f"questcast: {old_name} is ignored because {new_name} is set")
-    for override, new, old in (
-        ("ENV_FILE", ".qc_post_env", ".ai_post_env"),
-        ("DATA_DIR", "QuestCast", "XPosts"),
+        if OLD_PREFIX + name in os.environ:
+            problems.append(
+                f"{OLD_PREFIX}{name} is no longer read; rename it to {NEW_PREFIX}{name}"
+            )
+    for name, old, new, verb in (
+        ("DATA_DIR", "XPosts", "QuestCast", "move"),
+        ("ENV_FILE", ".ai_post_env", ".qc_post_env", "rename"),
     ):
-        if setting(override) is not None:
+        if setting(name) is not None:
             continue  # a variable chose the path, so the default files don't matter
-        new_path, old_path = _default_pair(new, old)
-        if not old_path.exists():
-            continue
-        if new_path.exists():
-            lines.append(
-                f"questcast: {shown(old_path)} is ignored because {shown(new_path)} exists"
+        old_path, new_path = Path.home() / old, Path.home() / new
+        if old_path.exists() and not new_path.exists():
+            problems.append(
+                f"{shown(old_path)} is no longer read; {verb} it with: "
+                f"mv {shown(old_path)} {shown(new_path)} (or set {NEW_PREFIX}{name})"
             )
-        else:
-            verb = "rename it" if override == "ENV_FILE" else "move it"
-            lines.append(
-                f"questcast: using {shown(old_path)}; {verb} with: "
-                f"mv {shown(old_path)} {shown(new_path)}"
-            )
-    return lines
+    return problems
 
 
 def profile_file() -> Path:

@@ -2,15 +2,14 @@
 
 Command-line tool that drafts X and LinkedIn posts from an author profile and a topic chosen
 at run time. Developed on Python 3.14; the package supports 3.13 and later, so don't use
-3.14-only syntax or APIs. Managed with uv. The package is `questcast` and the command is `qc`
-(`xgp` is an alias for one release); `daily_post.py` is a shim that calls
-`questcast.cli.main`. Standard library only at runtime.
+3.14-only syntax or APIs. Managed with uv. The package is `questcast` and the command is `qc`;
+`daily_post.py` is a shim that calls `questcast.cli.main`. Standard library only at runtime.
 
 ## Layout
 
 - `questcast/` - the package, flat at the repo root (not under `src/`)
   - `config.py` - the only module that reads the environment; handles the `QC_POST_*` names
-    and the `AI_POST_*` fallbacks
+    and the old-name check (`old_name_problems`)
   - `cli.py` - argument parsing and command-line output; `storage.py` - the data folder
     (profile, drafts, history, run log)
   - `providers.py`, `search.py`, `feeds.py`, `net.py`, `publish.py`, `prompt.py`,
@@ -73,11 +72,9 @@ version CI pins:
 - **Draft-only is the default.** Never add or change code so that anything posts without an
   explicit `--post` or `--post-linkedin` flag.
 - **Never commit secrets, the personal author profile, or generated output.** Keys live in
-  `~/.qc_post_env` (the old `~/.ai_post_env` is still read during the transition); the
-  profile, drafts, history and run log live in `~/QuestCast` (the old `~/XPosts` is still read
-  during the transition). `.gitignore` covers them; never weaken it.
-- **Never read `~/career-workspace`, `~/.qc_post_env`, `~/.ai_post_env`, `~/QuestCast/` or
-  `~/XPosts/`**, and never read or print `.env` files. They hold Dusten's real career data,
+  `~/.qc_post_env`; the profile, drafts, history and run log live in `~/QuestCast`.
+  `.gitignore` covers them; never weaken it.
+- **Never read `~/career-workspace`, `~/.qc_post_env` or `~/QuestCast/`**, and never read or print `.env` files. They hold Dusten's real career data,
   keys and generated drafts. The shared settings deny it.
 - **Never print an API key or token**, including in error messages.
 - **Work on a branch** off an up-to-date origin/master. Never commit or push to master.

@@ -2,7 +2,26 @@
 
 All notable changes to this project are recorded here, newest first.
 
-## Unreleased
+## 4.0.0
+
+### Removed
+
+- The `xgp` command. Use `qc`.
+- Every `AI_POST_*` setting. Only `QC_POST_*` is read.
+- The `~/XPosts` data folder and the `~/.ai_post_env` key file as fallbacks. Only `~/QuestCast` and
+  `~/.qc_post_env` are read.
+- The `~/.ai_post_venv` hints in the install messages.
+
+### Changed
+
+- **Breaking:** an old name now stops the run instead of being read. `qc` exits with status 1,
+  before it reads the profile or writes anything (not even `run.log`), when an `AI_POST_*` setting
+  is set in the shell or the env file (even with the `QC_POST_*` one also set), when `~/XPosts`
+  exists and `~/QuestCast` doesn't, or when `~/.ai_post_env` exists and `~/.qc_post_env` doesn't.
+  One message lists every problem, names and paths only, never values, with the fix for each. If
+  both the old and the new folder (or key file) exist, the new one is used and nothing is said.
+  `--help` still works. See "Upgrading to 4.0" in the README.
+- The HTTP user agent is `QuestCast/4`.
 
 ### Fixed
 

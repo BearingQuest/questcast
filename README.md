@@ -88,13 +88,13 @@ https://github.com/BearingQuest/questcast/releases.
 
 ```bash
 # uv, from the tag (needs git):
-uv tool install git+https://github.com/BearingQuest/questcast@v3.1.1
+uv tool install git+https://github.com/BearingQuest/questcast@v4.0.0
 # pipx, from the tag:
-pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v3.1.1
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.0.0
 
 # or from the release's wheel:
-uv tool install https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl
-pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl
 ```
 
 **First run.** Create the data directory and a profile to fill in, and the key
@@ -138,7 +138,7 @@ build-provenance attestation. For a file you downloaded from the release (not
 for an install from git), check it with the GitHub CLI:
 
 ```bash
-gh attestation verify questcast-3.1.1-py3-none-any.whl -R BearingQuest/questcast
+gh attestation verify questcast-4.0.0-py3-none-any.whl -R BearingQuest/questcast
 ```
 
 ## Setup
@@ -156,7 +156,7 @@ which block system-wide pip installs per PEP 668. Nothing needs installing for
 the default provider:
 
 ```bash
-python3 -m venv ~/.qc_post_venv    # earlier installs: ~/.ai_post_venv still works for now
+python3 -m venv ~/.qc_post_venv
 # only if you will use --provider anthropic, run from the clone:
 ~/.qc_post_venv/bin/pip install -e '.[anthropic]'
 ```
@@ -211,10 +211,10 @@ Keep this file out of version control — it is personal, and it is already in
 ## iPhone (a-Shell)
 
 Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.com/app/id1473805438)
-with its Python 3.13 and QuestCast 3.1.1. It is tested, not supported: CI can't run a-Shell. iPad is
+with its Python 3.13 and QuestCast 4.0.0. It is tested, not supported: CI can't run a-Shell. iPad is
 untested.
 
-- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl`.
+- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
   (see [Install](#install)) happens on a computer.
 - **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be
@@ -290,7 +290,7 @@ different item.
 | `--post-linkedin` | Publish the LinkedIn version (see below) |
 
 For a shorter daily command, keep a wrapper outside the repo, e.g.
-`~/QuestCast/aipost.sh`:
+`~/QuestCast/qcpost.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -298,8 +298,8 @@ set -euo pipefail
 exec "$HOME/.qc_post_venv/bin/python" "/path/to/daily_post.py" "$@"
 ```
 
-`chmod +x` it once, then each day is `~/QuestCast/aipost.sh` — and arguments pass
-straight through, so `~/QuestCast/aipost.sh --topic kubernetes` works too.
+`chmod +x` it once, then each day is `~/QuestCast/qcpost.sh` — and arguments pass
+straight through, so `~/QuestCast/qcpost.sh --topic kubernetes` works too.
 
 ### Providers and search
 
@@ -331,9 +331,9 @@ one search call fits its tokens-per-minute limit, is not published. If a
 your feeds.
 
 Environment variables (set them in `~/.qc_post_env` or the shell; a value already set in
-the shell wins, and `QC_POST_ENV_FILE` works only from the shell). Each
-`QC_POST_*` name also still reads its old `AI_POST_*` name, with a notice on
-stderr; see "Migrating from XGeneratePosts" below:
+the shell wins, and `QC_POST_ENV_FILE` works only from the shell). Only the
+`QC_POST_*` names are read. An old `AI_POST_*` name stops the run; see
+"Upgrading to 4.0" below:
 
 | Variable | Default | Effect |
 |---|---|---|
@@ -350,8 +350,8 @@ stderr; see "Migrating from XGeneratePosts" below:
 | `QC_POST_RSS_MAX_ENTRIES` | `20` | Most candidates sent to the model with `--search rss`, after the per-feed cap. Entries matching more of the topic's words go first, then newer ones. Lower it if Groq returns 413 |
 | `QC_POST_TOKEN_BUDGET` | `7000` | Most estimated prompt tokens with `--search rss`. The lowest-ranked entries are dropped until the prompt fits, after the `QC_POST_RSS_MAX_ENTRIES` cap. See "Rate limits and progress" below |
 | `QC_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
-| `QC_POST_DATA_DIR` | `~/QuestCast` (`~/XPosts` if that is all you have) | Where the profile, drafts, history and run log live |
-| `QC_POST_ENV_FILE` | `~/.qc_post_env` (`~/.ai_post_env` if that is all you have) | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
+| `QC_POST_DATA_DIR` | `~/QuestCast` | Where the profile, drafts, history and run log live |
+| `QC_POST_ENV_FILE` | `~/.qc_post_env` | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
 | `X_API_KEY` | none | X app key, for `--post` (see "Optional: publishing to X") |
 | `X_API_SECRET` | none | X app secret, for `--post` |
 | `X_ACCESS_TOKEN` | none | X user access token with Read and Write, for `--post` |
@@ -359,15 +359,6 @@ stderr; see "Migrating from XGeneratePosts" below:
 | `LINKEDIN_ACCESS_TOKEN` | none | LinkedIn member access token, for `--post-linkedin` (see "Optional: publishing to LinkedIn") |
 | `LINKEDIN_AUTHOR_URN` | none | Your LinkedIn author URN, for `--post-linkedin` |
 | `LINKEDIN_API_VERSION` | `202601` | LinkedIn API version header sent with `--post-linkedin`; LinkedIn revises it periodically |
-| `AI_POST_PROVIDER` | the value of `QC_POST_PROVIDER` | Old name of `QC_POST_PROVIDER`. Read only when the new name isn't set, with a notice on stderr, for one release |
-| `AI_POST_SEARCH` | the value of `QC_POST_SEARCH` | Old name of `QC_POST_SEARCH`, read the same way |
-| `AI_POST_PROVIDER_TIMEOUT` | the value of `QC_POST_PROVIDER_TIMEOUT` | Old name of `QC_POST_PROVIDER_TIMEOUT`, read the same way |
-| `AI_POST_RSS_PER_FEED` | the value of `QC_POST_RSS_PER_FEED` | Old name of `QC_POST_RSS_PER_FEED`, read the same way |
-| `AI_POST_RSS_MAX_ENTRIES` | the value of `QC_POST_RSS_MAX_ENTRIES` | Old name of `QC_POST_RSS_MAX_ENTRIES`, read the same way |
-| `AI_POST_TOKEN_BUDGET` | the value of `QC_POST_TOKEN_BUDGET` | Old name of `QC_POST_TOKEN_BUDGET`, read the same way |
-| `AI_POST_RATE_LIMIT_WAIT` | the value of `QC_POST_RATE_LIMIT_WAIT` | Old name of `QC_POST_RATE_LIMIT_WAIT`, read the same way |
-| `AI_POST_DATA_DIR` | the value of `QC_POST_DATA_DIR` | Old name of `QC_POST_DATA_DIR`, read the same way |
-| `AI_POST_ENV_FILE` | the value of `QC_POST_ENV_FILE` | Old name of `QC_POST_ENV_FILE`, read from the shell environment only, like the new name |
 
 ### Rate limits and progress
 
@@ -461,7 +452,7 @@ In the repo:
 | File | Purpose |
 |---|---|
 | `daily_post.py` | Runs the generator from a clone; a few lines that call the package |
-| `questcast/` | The generator, as a package. Installed, it provides the `qc` command (and `xgp`, an alias for one release) |
+| `questcast/` | The generator, as a package. Installed, it provides the `qc` command |
 | `questcast/author_profile.example.md` | Scaffold that `qc init` copies; fill it in |
 | `scripts/install-check.sh` | Builds and installs the package in a clean environment and checks `qc init` (`make install-check`) |
 | `tests/` | Unit and acceptance tests, run with `make check`; no network needed |
@@ -489,7 +480,7 @@ uv sync      # Python from .python-version, plus the dev tools from uv.lock
 make check   # ruff check, ruff format --check, mypy, pytest with coverage
 make audit   # pip-audit against the locked dependencies, optional extras included
 make sbom    # CycloneDX SBOM of the default install's runtime dependencies, to build/sbom.cdx.json
-make install-check  # build, check the wheel's extras, install into a clean venv, check qc --help, xgp --help and qc init
+make install-check  # build, check the wheel's extras, install into a clean venv, check qc --help and qc init, and that no xgp command is installed
 ```
 
 ### Security checks
@@ -544,11 +535,21 @@ was never given. Capping references at one per post and forbidding anything
 outside the list is what keeps the output honest — and it matters more once
 topics vary, since some days will land outside your deepest expertise.
 
-## Migrating from XGeneratePosts
+## Upgrading to 4.0
 
-QuestCast was XGeneratePosts. The configuration names changed with it, and the
-old ones keep working, with a one-line notice on stderr, until the next
-release removes them. Nothing is moved for you. Run these once:
+QuestCast was XGeneratePosts. 4.0 removes the old names: the `xgp` command (use `qc`), every
+`AI_POST_*` setting, and the `~/XPosts` and `~/.ai_post_env` locations. They are never read
+again. Instead `qc` stops, with exit status 1, before it reads your profile or writes
+anything, so nobody silently loses history, a key or a provider choice. It stops when:
+
+- an `AI_POST_<NAME>` setting is set, in the shell or in the key file, even if `QC_POST_<NAME>`
+  is set too;
+- `QC_POST_DATA_DIR` is unset, `~/XPosts` exists and `~/QuestCast` doesn't;
+- `QC_POST_ENV_FILE` is unset, `~/.ai_post_env` exists and `~/.qc_post_env` doesn't.
+
+One message lists every problem, with names and paths only, never values, and what to do
+about each. `qc --help` still works. If both the old and the new folder (or key file) exist,
+the new one is used and nothing is said. Nothing is moved for you. Run these once:
 
 ```bash
 # 0. find anything scheduled that still uses the old paths, and update it after step 1
@@ -563,25 +564,19 @@ mv -n ~/.ai_post_env ~/.qc_post_env
 ls -l ~/.qc_post_env ~/.ai_post_env 2>&1   # new file shows -rw-------; old one should be gone
 ```
 
-Scripts kept in the data folder (such as a wrapper) move with it; update any paths and AI_POST_ names inside them, and in any cron or LaunchAgent entry found in step 0.
+Scripts kept in the data folder (such as a wrapper) move with it; update any paths and
+`AI_POST_` names inside them, and in any cron or LaunchAgent entry found in step 0. A wrapper
+called `aipost.sh` can be renamed `qcpost.sh`.
 
 3. In your shell profile (and any cron or wrapper script), rename `AI_POST_` to
    `QC_POST_`, for example `AI_POST_PROVIDER` to `QC_POST_PROVIDER`. Do the same
    inside the key file if you set any there.
 4. If you made a clone-path venv, recreate it as `~/.qc_post_venv` (step 1 of
    Setup). The old `~/.ai_post_venv` can then be deleted.
+5. Use `qc` in place of `xgp`.
 
-How the old names are treated until then:
-
-- If `QC_POST_X` is set it wins, and `AI_POST_X` is ignored with a notice.
-  Otherwise `AI_POST_X` is used, with a notice. This holds for names set in the
-  key file too.
-- If `~/QuestCast` exists it is used and `~/XPosts` is not touched; otherwise
-  `~/XPosts` is used if it exists. The key file works the same way
-  (`~/.qc_post_env`, then `~/.ai_post_env`).
-- `qc init` creates `~/QuestCast` only when neither folder exists.
-- Notices name paths and variables, never values, and are not written to
-  `drafts.md`, `history.json` or `run.log`.
+If you would rather keep the old folder or key file where it is, set `QC_POST_DATA_DIR` or
+`QC_POST_ENV_FILE` to its path instead of moving it.
 
 ## Security notes
 

@@ -6,8 +6,6 @@ import pytest
 
 from questcast import cli
 
-XGP_NOTICE = "xgp is now qc; xgp will be removed after the next release\n"
-
 
 @pytest.fixture
 def no_provider(monkeypatch):
@@ -20,7 +18,6 @@ def no_provider(monkeypatch):
     monkeypatch.setattr(cli, "make_provider", fail)
 
 
-@pytest.mark.parametrize("entry", [cli.main, cli.xgp_main], ids=["qc", "xgp"])
 @pytest.mark.parametrize(
     ("args", "message"),
     [
@@ -30,11 +27,11 @@ def no_provider(monkeypatch):
         (["--list"], "unrecognized arguments: --list"),
     ],
 )
-def test_abbreviated_flag_exits_2(monkeypatch, capsys, no_provider, entry, args, message):
+def test_abbreviated_flag_exits_2(monkeypatch, capsys, no_provider, args, message):
     monkeypatch.setattr(sys, "argv", ["qc", *args])
 
     with pytest.raises(SystemExit) as exc:
-        entry()
+        cli.main()
 
     assert exc.value.code == 2
     err = capsys.readouterr().err

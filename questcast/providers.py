@@ -136,7 +136,6 @@ class AnthropicProvider:
                 "From the repo clone, install it one of two ways:\n\n"
                 "  installed qc:      uv tool install --reinstall '.[anthropic]'\n"
                 "  the clone's venv:   ~/.qc_post_venv/bin/pip install -e '.[anthropic]'\n"
-                "                      (or ~/.ai_post_venv)\n"
             ) from None
 
         extra = {}

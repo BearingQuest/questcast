@@ -80,4 +80,9 @@ def test_r47_security_md_describes_private_reporting_and_supported_versions():
     assert "Report a vulnerability" in body
     assert "Don't open a public issue" in body
     assert "## Supported versions" in body
-    assert "Only the latest commit on `master` is supported." in body
+    assert "Only the latest release is supported (4.x today)." in body
+    assert (
+        "Security fixes land on `master` and ship in the next release, which is what users install."
+        in body
+    )
+    assert "There are no tagged releases yet." not in body

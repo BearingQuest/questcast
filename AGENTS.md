@@ -58,6 +58,7 @@ the five required checks in `.github/rulesets/main.json`:
 - `zizmor` - static analysis of the workflows in `.github`
 
 Not required: `audit-daily.yml` (daily pip-audit), `sbom.yml`, `scorecard.yml`,
+`release.yml` (runs on `v*` tags; builds, attests and drafts the release),
 `claude-review.yml` (inline review comments from the rules in this file) and
 `autofix-notice.yml`. Renaming, removing or adding a job that runs on pull requests means
 updating `.github/rulesets/main.json` in the same pull request, and saying in the PR

@@ -44,5 +44,11 @@ jobs:
         run: uv run --no-project --python 3.14 python -c "import pyexpat; print(pyexpat.EXPAT_VERSION)"
       - name: Lint, types and tests (make check)
         run: make check
+      # Python 3.13 is the supported floor (a-Shell on iOS). The whole suite, frozen
+      # acceptance tests included, runs there in its own environment.
+      - name: Tests on Python 3.13
+        run: |
+          uv python install 3.13
+          UV_PROJECT_ENVIRONMENT="$RUNNER_TEMP/venv313" uv run --locked --python 3.13 pytest
       - name: Install check (R42)
         run: make install-check

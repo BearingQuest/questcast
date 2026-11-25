@@ -200,7 +200,7 @@ class OpenAICompatProvider:
         self.usage = token_usage(payload)
         try:
             text = payload["choices"][0]["message"]["content"]
-        except KeyError, IndexError, TypeError:
+        except (KeyError, IndexError, TypeError):
             text = None
         if not isinstance(text, str) or not text.strip():
             key = self.api_key()
@@ -427,7 +427,7 @@ def error_body(exc: urllib.error.HTTPError) -> str:
     """The error response's body, read once so it can be both parsed and shown."""
     try:
         return exc.read(4000).decode("utf-8", "replace")
-    except OSError, AttributeError:  # no body attached
+    except (OSError, AttributeError):  # no body attached
         return ""
 
 
@@ -467,7 +467,7 @@ def friendly_http_error(
     """
     try:
         detail = str(json.loads(body)["error"]["message"])
-    except ValueError, KeyError, TypeError:
+    except (ValueError, KeyError, TypeError):
         detail = body
     detail = clean_detail(detail, provider.api_key()) or "(no detail)"
     code = exc.code

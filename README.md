@@ -18,7 +18,7 @@
   <a href="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml/badge.svg?branch=master"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/BearingQuest/questcast"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/BearingQuest/questcast/badge"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1B365D"></a>
-  <img alt="Python 3.14 or newer" src="https://img.shields.io/badge/python-3.14+-1B365D">
+  <img alt="Python 3.13 or newer" src="https://img.shields.io/badge/python-3.13+-1B365D">
 </p>
 
 Pick a technology topic, and this finds one noteworthy recent item on it and
@@ -70,7 +70,7 @@ Each run:
 
 ## Requirements
 
-- Python 3.14 or newer
+- Python 3.13 or newer
 - A free Groq API key — https://console.groq.com/keys
 - Nothing else for the default setup: the `groq` and `openai-compat` providers
   use only the standard library. `--provider anthropic` needs the `anthropic`
@@ -80,19 +80,19 @@ Each run:
 
 ## Install
 
-Install the `qc` command from a tagged release (Python 3.14 or newer; `uv`
+Install the `qc` command from a tagged release (Python 3.13 or newer; `uv`
 fetches it if you don't have it). Releases are listed at
 https://github.com/BearingQuest/questcast/releases.
 
 ```bash
 # uv, from the tag (needs git):
-uv tool install git+https://github.com/BearingQuest/questcast@v3.1.0
+uv tool install git+https://github.com/BearingQuest/questcast@v3.1.1
 # pipx, from the tag:
-pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v3.1.0
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v3.1.1
 
 # or from the release's wheel:
-uv tool install https://github.com/BearingQuest/questcast/releases/download/v3.1.0/questcast-3.1.0-py3-none-any.whl
-pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v3.1.0/questcast-3.1.0-py3-none-any.whl
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v3.1.1/questcast-3.1.1-py3-none-any.whl
 ```
 
 **First run.** Create the data directory and a profile to fill in, and the key
@@ -136,7 +136,7 @@ build-provenance attestation. For a file you downloaded from the release (not
 for an install from git), check it with the GitHub CLI:
 
 ```bash
-gh attestation verify questcast-3.1.0-py3-none-any.whl -R BearingQuest/questcast
+gh attestation verify questcast-3.1.1-py3-none-any.whl -R BearingQuest/questcast
 ```
 
 ## Setup

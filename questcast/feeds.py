@@ -55,7 +55,7 @@ def parse_date(text: str | None) -> datetime | None:
     text = text.strip()
     try:
         parsed = parsedate_to_datetime(text)  # RSS: RFC 822
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         try:
             parsed = datetime.fromisoformat(text)  # Atom: RFC 3339
         except ValueError:

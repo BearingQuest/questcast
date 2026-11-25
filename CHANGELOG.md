@@ -4,6 +4,17 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+## 3.1.1
+
+### Fixed
+
+- Runs on Python 3.13 (3.13 or later is now required, down from 3.14), so the wheel installs
+  in a-Shell on iOS. 3.1.0 failed on import there with `SyntaxError: multiple exception types
+  must be parenthesized`. Cause: ruff's `target-version` was `py314`, which allowed the
+  Python 3.14-only form `except A, B:` (PEP 758) in `feeds.py` and `providers.py`. The target
+  is now `py313`, a test keeps it equal to the minimum in `requires-python`, and CI runs the
+  whole test suite on 3.13 as well as 3.14.
+
 ## 3.1.0
 
 - Packaging: QuestCast is an installable package with a lockfile (`uv.lock`) and the `qc`

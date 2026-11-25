@@ -1,7 +1,8 @@
 # QuestCast: notes for agents
 
 Command-line tool that drafts X and LinkedIn posts from an author profile and a topic chosen
-at run time. Python 3.14, managed with uv. The package is `questcast` and the command is `qc`
+at run time. Developed on Python 3.14; the package supports 3.13 and later, so don't use
+3.14-only syntax or APIs. Managed with uv. The package is `questcast` and the command is `qc`
 (`xgp` is an alias for one release); `daily_post.py` is a shim that calls
 `questcast.cli.main`. Standard library only at runtime.
 

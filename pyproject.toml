@@ -1,9 +1,9 @@
 [project]
 name = "questcast"
-version = "3.1.0"
+version = "3.1.1"
 description = "Drafts X and LinkedIn posts from an author profile and a topic chosen at run time."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 license = "MIT"
 license-files = ["LICENSE"]
 # Standard library only at runtime (v3 R5).
@@ -42,7 +42,7 @@ module-root = ""
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "T20"]

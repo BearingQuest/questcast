@@ -32,14 +32,14 @@ def test_r1_r3_default_provider_requires_groq_credential(
     [
         (
             ("--provider", "anthropic"),
-            {"AI_POST_PROVIDER": "openai-compat"},
+            {"QC_POST_PROVIDER": "openai-compat"},
             "ANTHROPIC_API_KEY",
             "anthropic",
             "https://console.anthropic.com/settings/keys",
         ),
         (
             (),
-            {"AI_POST_PROVIDER": "anthropic"},
+            {"QC_POST_PROVIDER": "anthropic"},
             "ANTHROPIC_API_KEY",
             "anthropic",
             "https://console.anthropic.com/settings/keys",

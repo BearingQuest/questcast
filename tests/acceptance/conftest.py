@@ -301,8 +301,8 @@ def env_builder(
         env = {
             "PATH": os.environ.get("PATH", ""),
             "HOME": str(home),
-            "AI_POST_DATA_DIR": str(data_dir),
-            "AI_POST_ENV_FILE": str(tmp_path / "env-file-does-not-exist"),
+            "QC_POST_DATA_DIR": str(data_dir),
+            "QC_POST_ENV_FILE": str(tmp_path / "env-file-does-not-exist"),
         }
         env.update(overrides)
         return env

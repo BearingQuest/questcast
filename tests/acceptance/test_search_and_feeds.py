@@ -27,7 +27,7 @@ def test_r6_search_flag_overrides_environment(
     rss_feed,
     env_builder,
 ) -> None:
-    """R6: --search overrides AI_POST_SEARCH."""
+    """R6: --search overrides QC_POST_SEARCH."""
     entry = make_entry(
         "Flag-selected RSS marker",
         "https://example.test/flag-selected",
@@ -42,7 +42,7 @@ def test_r6_search_flag_overrides_environment(
         "--search",
         "rss",
         env=env_builder(
-            AI_POST_SEARCH="native",
+            QC_POST_SEARCH="native",
             OPENAI_COMPAT_BASE_URL=model_stub.base_url,
             OPENAI_COMPAT_MODEL="test-model",
             SSL_CERT_FILE=str(certificate),
@@ -64,7 +64,7 @@ def test_r6_search_environment_overrides_provider_default(
     rss_feed,
     env_builder,
 ) -> None:
-    """R6: AI_POST_SEARCH overrides the provider-specific default."""
+    """R6: QC_POST_SEARCH overrides the provider-specific default."""
     entry = make_entry(
         "Environment-selected RSS marker",
         "https://example.test/environment-selected",
@@ -77,7 +77,7 @@ def test_r6_search_environment_overrides_provider_default(
         "--provider",
         "openai-compat",
         env=env_builder(
-            AI_POST_SEARCH="rss",
+            QC_POST_SEARCH="rss",
             OPENAI_COMPAT_BASE_URL=model_stub.base_url,
             OPENAI_COMPAT_MODEL="test-model",
             SSL_CERT_FILE=str(certificate),
@@ -434,7 +434,7 @@ def test_r19_configured_cap_is_applied_per_feed(
     rss_feed,
     env_builder,
 ) -> None:
-    """R19: AI_POST_RSS_PER_FEED configures the entry cap."""
+    """R19: QC_POST_RSS_PER_FEED configures the entry cap."""
     first = [
         make_entry(
             f"First-feed cap marker {index}",
@@ -465,7 +465,7 @@ def test_r19_configured_cap_is_applied_per_feed(
             OPENAI_COMPAT_BASE_URL=model_stub.base_url,
             OPENAI_COMPAT_MODEL="test-model",
             SSL_CERT_FILE=str(certificate),
-            AI_POST_RSS_PER_FEED="2",
+            QC_POST_RSS_PER_FEED="2",
         ),
     )
 

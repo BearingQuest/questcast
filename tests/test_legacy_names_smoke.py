@@ -1,8 +1,9 @@
 """R30: the daily_post.py shim runs from the repo root with no install. A real
 daily_post.py run with only the old AI_POST_* names set, built the way
 tests/acceptance/conftest.py's env_builder builds its child environment. The
-frozen acceptance tests all do this, so this keeps the old-name path covered by
-a test that is not frozen: the names still work, and each run says so once."""
+frozen acceptance tests now use QC_POST_*, so this test alone covers the
+old-name fallback: the names still work, and each run says so once. The removal
+PR deletes the fallbacks and this test together."""
 
 import os
 import sys

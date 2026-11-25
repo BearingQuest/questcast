@@ -46,7 +46,7 @@ def test_r20_provider_timeout_is_honoured(
     result = run_cli(
         "--provider",
         "openai-compat",
-        env=successful_rss_environment(AI_POST_PROVIDER_TIMEOUT="1"),
+        env=successful_rss_environment(QC_POST_PROVIDER_TIMEOUT="1"),
         timeout=10,
     )
     elapsed = time.monotonic() - started

@@ -1,6 +1,6 @@
-"""R62 to R65: the "Post on X" link, --post opening X's compose box, and no X API path."""
+"""R62 to R65, R72: the "Post on X" link, --post opening X's compose box, and no X API path."""
 
-import importlib
+import importlib.util
 import json
 import re
 import sys
@@ -20,6 +20,10 @@ HOSTILE = [
     "100% sure %41 %",
 ]
 SAFE_LINK = re.compile(r"^https://x\.com/intent/tweet\?text=[A-Za-z0-9%._~-]*$")
+POINTER = (
+    "Compose links for X and LinkedIn are in drafts.md; --post, --post-linkedin "
+    "or --post-all opens them."
+)
 
 
 @pytest.mark.parametrize("draft", HOSTILE)
@@ -34,6 +38,12 @@ def test_link_round_trips_the_exact_draft(draft):
 def test_link_holds_only_url_safe_characters(draft):
     # webbrowser hands the URL to osascript on macOS; full encoding keeps it inert.
     assert SAFE_LINK.match(fields.x_compose_link(draft))
+
+
+@pytest.mark.parametrize("draft", HOSTILE)
+def test_link_is_safe_inside_a_markdown_link(draft):
+    # drafts.md holds it as [Post on X](<link>): no bracket, parenthesis or whitespace.
+    assert not re.search(r"[()\[\]\s]", fields.x_compose_link(draft))
 
 
 ITEM = {
@@ -70,15 +80,23 @@ def draft_run(monkeypatch, profile_file):
     return run
 
 
-def test_link_is_on_stdout_after_the_draft_and_in_drafts_md(draft_run, capsys):
+def test_without_a_flag_the_screen_has_a_pointer_not_the_link(draft_run, capsys):
     link, calls = draft_run()
     out = capsys.readouterr().out
     x_post, _ = fields.compose_posts(ITEM)
-    assert f"{x_post}\nPost on X: {link}\n" in out
-    assert out.count("Post on X: ") == 1
+    assert x_post in out
     assert "X — draft" in out
-    assert f"## X\n\n{x_post}\n\nPost on X: {link}\n" in config.drafts_file().read_text()
+    assert link not in out
+    assert "Post on X" not in out
+    assert out.count(POINTER) == 1
+    assert out.index("Saved to") < out.index(POINTER)  # after the LinkedIn draft and Saved to
     assert calls == []  # without --post nothing is opened
+
+
+def test_drafts_md_holds_the_link_as_a_markdown_link(draft_run):
+    link, _ = draft_run()
+    x_post, _ = fields.compose_posts(ITEM)
+    assert f"## X\n\n{x_post}\n\n[Post on X]({link})\n" in config.drafts_file().read_text()
 
 
 def test_the_draft_text_is_unchanged_and_the_link_adds_no_url_parameter(draft_run):
@@ -91,9 +109,13 @@ def test_the_draft_text_is_unchanged_and_the_link_adds_no_url_parameter(draft_ru
 
 def test_post_opens_the_link_once_after_the_drafts_are_saved(draft_run, capsys):
     link, calls = draft_run("--post")
+    out = capsys.readouterr().out
     assert calls == [link]
-    assert "Post on X: " in config.drafts_file().read_text()
-    assert "No browser opened" not in capsys.readouterr().out
+    assert "[Post on X](" in config.drafts_file().read_text()
+    assert out.count("Opened X's compose box.\n") == 1
+    assert link not in out  # the link is printed only when no browser opens
+    assert POINTER not in out
+    assert "No browser opened" not in out
 
 
 @pytest.mark.parametrize("failure", [False, webbrowser.Error("no runnable browser")])
@@ -102,7 +124,8 @@ def test_post_without_a_browser_prints_one_line_and_exits_0(draft_run, capsys, f
     out = capsys.readouterr().out
     assert calls == [link]
     assert out.count("No browser opened") == 1
-    assert f"Post on X: {link}" in out
+    assert f"No browser opened; to post on X, open this link:\n{link}\n" in out
+    assert "Opened X's compose box." not in out
 
 
 def test_history_records_no_post(draft_run):
@@ -117,4 +140,4 @@ def test_no_run_imports_tweepy_and_config_has_no_x_credentials(draft_run):
     draft_run("--post")
     assert "tweepy" not in sys.modules
     assert not hasattr(config, "x_credentials")
-    assert not hasattr(importlib.import_module("questcast.publish"), "post_to_x")
+    assert importlib.util.find_spec("questcast.publish") is None

@@ -20,9 +20,9 @@ Issues of particular interest:
 - fetching feeds and following redirects (`questcast/net.py`,
   `questcast/feeds.py`), including the refusal to follow an HTTPS
   redirect to plain HTTP;
-- the draft-only default: nothing is posted to LinkedIn, and X's compose box is not
-  opened, without an explicit `--post-linkedin` or `--post` flag, and QuestCast never
-  posts to X itself: you click Post;
+- the draft-only default: nothing is posted, and neither X's compose box nor LinkedIn's
+  post box is opened, without an explicit `--post`, `--post-linkedin` or `--post-all`
+  flag, and QuestCast never posts itself: you click Post;
 - `qc init`: the profile it creates in `~/QuestCast` gets file mode 600, and an
   existing profile is never overwritten.
 

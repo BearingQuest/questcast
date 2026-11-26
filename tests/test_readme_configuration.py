@@ -26,8 +26,6 @@ ENV_NAME = re.compile(f"{PREFIXED}|{CREDENTIAL_OR_PROVIDER}")
 ROW = re.compile(r"^\|\s*`([A-Z][A-Z0-9_]+)`\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|$")
 
 CREDENTIALS_WITH_NO_DEFAULT = (
-    "LINKEDIN_ACCESS_TOKEN",
-    "LINKEDIN_AUTHOR_URN",
     "GROQ_API_KEY",
     "ANTHROPIC_API_KEY",
     "OPENAI_COMPAT_API_KEY",
@@ -85,7 +83,7 @@ def clean_env(monkeypatch, tmp_path):
 
 def test_the_table_is_still_parsed():
     # A change of format must not leave the guard with nothing to check.
-    assert len(readme_table()) >= 16
+    assert len(readme_table()) >= 15  # 18 before the three LINKEDIN_* rows went
 
 
 def test_every_variable_the_code_reads_is_in_the_readme_table():
@@ -135,16 +133,10 @@ def test_readme_defaults_match_the_code(clean_env):
     )
     assert config.groq_model() == ""  # unset: the provider falls back to the default model
     expect("GROQ_MODEL", first_token(table["GROQ_MODEL"]) == config.GROQ_DEFAULT_MODEL)
-    expect(
-        "LINKEDIN_API_VERSION",
-        first_token(table["LINKEDIN_API_VERSION"]) == config.linkedin_api_version(),
-    )
     for name in CREDENTIALS_WITH_NO_DEFAULT:
         expect(name, table[name] == "none")
     # The code gives each of these no value when it is unset.
     assert not hasattr(config, "x_credentials")
-    assert not config.linkedin_access_token()
-    assert not config.linkedin_author_urn()
     assert not config.anthropic_api_key()
     assert not config.api_key("GROQ_API_KEY")
     assert not config.api_key("OPENAI_COMPAT_API_KEY")
@@ -165,7 +157,6 @@ def test_every_variable_has_a_default_checked_here():
         "QC_POST_DATA_DIR",
         "QC_POST_ENV_FILE",
         "GROQ_MODEL",
-        "LINKEDIN_API_VERSION",
         *CREDENTIALS_WITH_NO_DEFAULT,
     }
     unchecked = sorted(name for name in names_in_code() if name not in checked)

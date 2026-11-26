@@ -12,7 +12,7 @@ at run time. Developed on Python 3.14; the package supports 3.13 and later, so d
     and the old-name check (`old_name_problems`)
   - `cli.py` - argument parsing and command-line output; `storage.py` - the data folder
     (profile, drafts, history, run log)
-  - `providers.py`, `search.py`, `feeds.py`, `net.py`, `publish.py`, `prompt.py`,
+  - `providers.py`, `search.py`, `feeds.py`, `net.py`, `prompt.py`,
     `dedup.py`, `fields.py`, `author_profile.py`, `progress.py` - the rest of the pipeline
 - `daily_post.py` - the shim the frozen acceptance tests run
 - `tests/` - pytest checks
@@ -70,8 +70,8 @@ version CI pins:
 ## Rules
 
 - **Draft-only is the default.** Never add or change code so that anything posts without an
-  explicit `--post` or `--post-linkedin` flag. `--post` only opens X's compose box; the user
-  clicks Post.
+  explicit `--post` or `--post-linkedin` flag. `--post`, `--post-linkedin` and `--post-all` only open X's compose
+  box or LinkedIn's post box; the user clicks Post.
 - **Never commit secrets, the personal author profile, or generated output.** Keys live in
   `~/.qc_post_env`; the profile, drafts, history and run log live in `~/QuestCast`.
   `.gitignore` covers them; never weaken it.
@@ -155,8 +155,8 @@ item.
 - Create, rotate or print secrets, or set organization or repository secrets.
 - Dismiss a finding from the review agent, CodeQL, Semgrep, zizmor, Scorecard, CI or
   Dependabot. List it for Dusten instead.
-- Approve or publish content, or post to X or LinkedIn (`--post`, `--post-linkedin`). Opening X's compose box with `--post` is
-  also a human step.
+- Approve or publish content, or post to X or LinkedIn (`--post`, `--post-linkedin`). Opening X's compose box with `--post`, LinkedIn's post box with
+  `--post-linkedin`, or both with `--post-all` is also a human step.
 - Change repository, organization or account security settings (Dependabot, code scanning,
   Actions policy, auto-delete branches), run any block from the GitHub settings-as-code doc,
   or create, rename or transfer repositories.

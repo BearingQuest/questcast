@@ -48,3 +48,14 @@ def x_compose_link(draft: str) -> str:
     link holds only URL-safe characters whatever the draft contains.
     """
     return f"https://x.com/intent/tweet?text={quote(draft, safe='')}"
+
+
+def linkedin_compose_link(draft: str) -> str:
+    """LinkedIn's post-box link: opens the post box with the draft filled in.
+
+    The link is undocumented (LinkedIn's documented share plugin takes a URL
+    only), so LinkedIn could change it. Everything outside the unreserved set
+    is percent-encoded (safe=""), so the link holds only URL-safe characters
+    whatever the draft contains.
+    """
+    return f"https://www.linkedin.com/feed/?shareActive=true&text={quote(draft, safe='')}"

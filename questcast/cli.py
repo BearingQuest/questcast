@@ -18,10 +18,15 @@ from questcast.config import (
     SEARCH_SOURCES,
 )
 from questcast.dedup import is_used, used_from
-from questcast.fields import compose_posts, parse_fields, trim, x_compose_link
+from questcast.fields import (
+    compose_posts,
+    linkedin_compose_link,
+    parse_fields,
+    trim,
+    x_compose_link,
+)
 from questcast.prompt import build_prompt, estimate_tokens
 from questcast.providers import make_provider, select_provider
-from questcast.publish import post_to_linkedin
 from questcast.search import make_search, select_search
 from questcast.storage import load_history, load_profile, log_drafts, log_run, save_history
 
@@ -166,7 +171,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--post-linkedin",
         action="store_true",
-        help="publish the LinkedIn version (needs an approved LinkedIn app)",
+        help="open LinkedIn's post box with the LinkedIn draft filled in; nothing is "
+        "posted until you click Post",
+    )
+    parser.add_argument(
+        "--post-all",
+        action="store_true",
+        help="open both compose boxes, X first, then LinkedIn; the same as --post --post-linkedin",
     )
     parser.add_argument(
         "--history", action="store_true", help="show the last 10 items used, then exit"
@@ -255,7 +266,7 @@ def run() -> None:
     x_post, li_post = compose_posts(item)
 
     x_link = x_compose_link(x_post)
-    li_id = post_to_linkedin(li_post) if args.post_linkedin else ""
+    li_link = linkedin_compose_link(li_post)
 
     history.append(
         {
@@ -264,7 +275,7 @@ def run() -> None:
             "url": item["url"],
             "title": item["title"],
             "posted_x": False,  # the user posts from X's compose box; we can't know
-            "posted_linkedin": bool(li_id),
+            "posted_linkedin": False,  # same: the user posts from LinkedIn's post box
             "tweet_id": "",
             "provider": provider.name,
             "model": provider.model,
@@ -272,7 +283,7 @@ def run() -> None:
         }
     )
     save_history(history)
-    log_drafts(item, topic, x_post, li_post, x_link, bool(li_id), storage.RUN_VIA)
+    log_drafts(item, topic, x_post, li_post, x_link, li_link, storage.RUN_VIA)
     # R53, R59: to check the token estimate against real figures
     log_run(f"OK — [{topic}] {item['title']} ({item['url']}){storage.RUN_TOKENS}")
 
@@ -281,25 +292,39 @@ def run() -> None:
     print("X — draft")
     print(rule)
     print(x_post)
-    print(f"Post on X: {x_link}")
     print(f"\n{rule}")
-    print("LINKEDIN — PUBLISHED" if li_id else "LINKEDIN — draft")
+    print("LINKEDIN — draft")
     print(f"{rule}")
     print(li_post)
     print(f"\n[{len(item['linkedin'])} characters] Saved to {config.drafts_file()}")
 
-    if args.post:
-        open_compose_box(x_link)
+    open_x = args.post or args.post_all
+    open_linkedin = args.post_linkedin or args.post_all
+    if not (open_x or open_linkedin):
+        print(
+            "Compose links for X and LinkedIn are in drafts.md; --post, --post-linkedin "
+            "or --post-all opens them."
+        )
+    if open_x:
+        open_compose_box(x_link, "X", "X's compose box")
+    if open_linkedin:
+        open_compose_box(li_link, "LinkedIn", "LinkedIn's post box")
 
 
-def open_compose_box(link: str) -> None:
-    """--post: open X's compose box once. Never raises; the link is on screen."""
+def open_compose_box(link: str, site: str, box: str) -> None:
+    """--post, --post-linkedin: open one site's compose box. Never raises.
+
+    The link is printed only when no browser opens, on its own line so it can be copied.
+    """
     try:
         opened = webbrowser.open(link)
     except webbrowser.Error:
         opened = False
-    if not opened:
-        print("No browser opened; use the Post on X link above.")
+    if opened:
+        print(f"Opened {box}.")
+    else:
+        print(f"No browser opened; to post on {site}, open this link:")
+        print(link)
 
 
 def init() -> None:

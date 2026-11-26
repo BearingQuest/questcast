@@ -58,9 +58,8 @@ warn_redundant_casts = true  # part of strict, but a global-only option
 # R28: strict on the pure-logic modules, which do no I/O. mypy's own
 # `strict` can't be set per module, so its flags are listed one by one.
 # Default level, not strict: config (environment and the env file), storage
-# (files), net, providers, search and publish (network, and the optional
-# untyped anthropic and tweepy SDKs), cli (terminal) and the daily_post.py
-# shim.
+# (files), net, providers and search (network, and the optional untyped
+# anthropic SDK), cli (terminal) and the daily_post.py shim.
 [[tool.mypy.overrides]]
 module = [
     "questcast.author_profile",

@@ -22,6 +22,7 @@ def no_provider(monkeypatch):
     ("args", "message"),
     [
         (["--post-l"], "unrecognized arguments: --post-l"),
+        (["--post-a"], "unrecognized arguments: --post-a"),
         # "--prov" is not taken as a flag, so "groq" is read as a command.
         (["--prov", "groq"], "invalid choice: 'groq'"),
         (["--list"], "unrecognized arguments: --list"),
@@ -52,14 +53,13 @@ def test_abbreviated_init_flag_exits_2(monkeypatch, capsys, no_provider):
 def test_full_flags_still_parse():
     parser = cli.build_parser()
 
-    args = parser.parse_args(["--post"])
-    assert (args.post, args.post_linkedin, args.list_topics) == (True, False, False)
+    def flags(args):
+        return (args.post, args.post_linkedin, args.post_all, args.list_topics)
 
-    args = parser.parse_args(["--post-linkedin"])
-    assert (args.post, args.post_linkedin, args.list_topics) == (False, True, False)
-
-    args = parser.parse_args(["--list-topics"])
-    assert (args.post, args.post_linkedin, args.list_topics) == (False, False, True)
+    assert flags(parser.parse_args(["--post"])) == (True, False, False, False)
+    assert flags(parser.parse_args(["--post-linkedin"])) == (False, True, False, False)
+    assert flags(parser.parse_args(["--post-all"])) == (False, False, True, False)
+    assert flags(parser.parse_args(["--list-topics"])) == (False, False, False, True)
 
     args = parser.parse_args(["init"])
     assert args.command == "init"

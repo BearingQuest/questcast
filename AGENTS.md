@@ -70,7 +70,8 @@ version CI pins:
 ## Rules
 
 - **Draft-only is the default.** Never add or change code so that anything posts without an
-  explicit `--post` or `--post-linkedin` flag.
+  explicit `--post` or `--post-linkedin` flag. `--post` only opens X's compose box; the user
+  clicks Post.
 - **Never commit secrets, the personal author profile, or generated output.** Keys live in
   `~/.qc_post_env`; the profile, drafts, history and run log live in `~/QuestCast`.
   `.gitignore` covers them; never weaken it.
@@ -154,7 +155,8 @@ item.
 - Create, rotate or print secrets, or set organization or repository secrets.
 - Dismiss a finding from the review agent, CodeQL, Semgrep, zizmor, Scorecard, CI or
   Dependabot. List it for Dusten instead.
-- Approve or publish content, or post to X or LinkedIn (`--post`, `--post-linkedin`).
+- Approve or publish content, or post to X or LinkedIn (`--post`, `--post-linkedin`). Opening X's compose box with `--post` is
+  also a human step.
 - Change repository, organization or account security settings (Dependabot, code scanning,
   Actions policy, auto-delete branches), run any block from the GitHub settings-as-code doc,
   or create, rename or transfer repositories.

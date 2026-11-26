@@ -1,6 +1,7 @@
 """The model's delimited response, and the posts made from it. No I/O."""
 
 import re
+from urllib.parse import quote
 
 FIELD_PATTERN = re.compile(r"^===([A-Z]+)===\s*$", re.MULTILINE)
 
@@ -38,3 +39,12 @@ def trim(text: str, limit: int) -> str:
 
 def compose_posts(item: dict[str, str]) -> tuple[str, str]:
     return f"{item['tweet']}\n{item['url']}", f"{item['linkedin']}\n\n{item['url']}"
+
+
+def x_compose_link(draft: str) -> str:
+    """X's web intent link: opens the compose box with the draft filled in.
+
+    Everything outside the unreserved set is percent-encoded (safe=""), so the
+    link holds only URL-safe characters whatever the draft contains.
+    """
+    return f"https://x.com/intent/tweet?text={quote(draft, safe='')}"

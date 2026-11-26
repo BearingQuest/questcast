@@ -29,7 +29,7 @@ OpenAI-compatible endpoint, can be swapped in with a flag, and RSS feeds you
 choose can replace the web search.
 
 > [!IMPORTANT]
-> Human-in-the-loop by default. Nothing is published unless you pass `--post` (X) or `--post-linkedin` (LinkedIn); read each draft first.
+> Human-in-the-loop by default. Nothing is published unless you pass `--post-linkedin` (LinkedIn) or click Post yourself in X's compose box (`--post` only opens it); read each draft first.
 
 The posts sound like *you* because of a profile file you write once and keep
 outside this repo. That file is the whole idea: the code is a small harness,
@@ -49,7 +49,7 @@ flowchart LR
     DR --> YOU{"You review"}
   end
   RUN <-->|"one search-and-write call<br/>(or RSS feeds you choose)"| API["Groq, Anthropic or<br/>OpenAI-compatible API"]
-  YOU -. "only with --post or --post-linkedin" .-> PUB["X / LinkedIn"]
+  YOU -. "Post on X link, or --post-linkedin" .-> PUB["X / LinkedIn"]
 ```
 
 Each run:
@@ -77,8 +77,6 @@ Each run:
 - Nothing else for the default setup: the `groq` and `openai-compat` providers
   use only the standard library. `--provider anthropic` needs the `anthropic`
   extra, pinned in `pyproject.toml`; see [Optional extras](#optional-extras).
-  `--post` needs tweepy, installed by hand (see
-  [Optional: publishing to X](#optional-publishing-to-x)).
 
 ## Install
 
@@ -88,13 +86,13 @@ https://github.com/BearingQuest/questcast/releases.
 
 ```bash
 # uv, from the tag (needs git):
-uv tool install git+https://github.com/BearingQuest/questcast@v4.0.0
+uv tool install git+https://github.com/BearingQuest/questcast@v4.1.0
 # pipx, from the tag:
-pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.0.0
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.1.0
 
 # or from the release's wheel:
-uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl
-pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl
 ```
 
 **First run.** Create the data directory and a profile to fill in, and the key
@@ -138,7 +136,7 @@ build-provenance attestation. For a file you downloaded from the release (not
 for an install from git), check it with the GitHub CLI:
 
 ```bash
-gh attestation verify questcast-4.0.0-py3-none-any.whl -R BearingQuest/questcast
+gh attestation verify questcast-4.1.0-py3-none-any.whl -R BearingQuest/questcast
 ```
 
 ## Setup
@@ -214,7 +212,7 @@ Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.
 with its Python 3.13 and QuestCast 4.0.0 (3.1.1 was tested first, the same day). It is tested, not supported: CI can't run a-Shell. iPad is
 untested.
 
-- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.0.0/questcast-4.0.0-py3-none-any.whl`.
+- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
   (see [Install](#install)) happens on a computer.
 - **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be
@@ -239,6 +237,7 @@ untested.
   https://support.apple.com/guide/shortcuts/add-a-shortcut-to-the-home-screen-apd735880972/ios
 - **History.** The phone keeps its own history, so duplicate checks don't span the phone and a
   computer.
+- **Post on X.** If `--post` opens no browser there, copy the printed `Post on X:` link.
 
 ## Optional extras
 
@@ -259,11 +258,6 @@ uv tool install --reinstall '.[anthropic]'
 links the install to this clone: `daily_post.py` and the venv both use the
 clone's code, so a `git pull` needs no reinstall unless the pin in
 `pyproject.toml` changes.
-
-tweepy, for `--post`, isn't an extra yet: tweepy 4.17.0 requires oauthlib
-below 4, and oauthlib 3.3.1 has open advisories fixed only in 4.0.0
-(`docs/decisions.md`). Install it by hand in a clone's venv; see
-[Optional: publishing to X](#optional-publishing-to-x).
 
 ## Usage
 
@@ -286,7 +280,7 @@ different item.
 | `--profile PATH` | Use a different profile file — handy for running more than one persona |
 | `--provider NAME` | `groq`, `anthropic` or `openai-compat`. Default: `QC_POST_PROVIDER`, else `groq` |
 | `--search SOURCE` | `native` or `rss`. Default: `QC_POST_SEARCH`, else `native` for `groq` and `anthropic`, `rss` for `openai-compat` |
-| `--post` | Publish the X version (see below) |
+| `--post` | Open X's compose box with the X draft filled in; nothing is posted until you click Post (see below) |
 | `--post-linkedin` | Publish the LinkedIn version (see below) |
 
 For a shorter daily command, keep a wrapper outside the repo, e.g.
@@ -352,10 +346,6 @@ the shell wins, and `QC_POST_ENV_FILE` works only from the shell). Only the
 | `QC_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
 | `QC_POST_DATA_DIR` | `~/QuestCast` | Where the profile, drafts, history and run log live |
 | `QC_POST_ENV_FILE` | `~/.qc_post_env` | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
-| `X_API_KEY` | none | X app key, for `--post` (see "Optional: publishing to X") |
-| `X_API_SECRET` | none | X app secret, for `--post` |
-| `X_ACCESS_TOKEN` | none | X user access token with Read and Write, for `--post` |
-| `X_ACCESS_SECRET` | none | X user access token secret, for `--post` |
 | `LINKEDIN_ACCESS_TOKEN` | none | LinkedIn member access token, for `--post-linkedin` (see "Optional: publishing to LinkedIn") |
 | `LINKEDIN_AUTHOR_URN` | none | Your LinkedIn author URN, for `--post-linkedin` |
 | `LINKEDIN_API_VERSION` | `202601` | LinkedIn API version header sent with `--post-linkedin`; LinkedIn revises it periodically |
@@ -397,23 +387,23 @@ reasoning it held, and how many tool calls, with their names. It never
 holds the reasoning, the tool arguments or the prompt. Re-run, and if it
 happens again, send that line.
 
-### Optional: publishing to X
+### Post on X
 
-```bash
-~/.qc_post_venv/bin/pip install tweepy
-~/.qc_post_venv/bin/python daily_post.py --post
+Every run prints one line after the X draft, and writes it into that run's
+`drafts.md` entry:
+
+```text
+Post on X: https://x.com/intent/tweet?text=...
 ```
 
-Needs an X developer app set to **Read and Write** and four user-context
-credentials in `~/.qc_post_env`. A Bearer token alone is app-only auth and
-cannot post:
-
-```bash
-export X_API_KEY=...
-export X_API_SECRET=...
-export X_ACCESS_TOKEN=...
-export X_ACCESS_SECRET=...
-```
+The link is X's [web intent](https://docs.x.com/x-for-websites/post-button/guides/web-intent):
+it opens the compose box with the draft filled in, source link included. You
+edit it and click Post. `--post` opens that link in your browser for you, once,
+after the drafts are saved. If no browser opens, QuestCast says so; the link is
+already on screen. QuestCast never posts to X itself and needs no X key: X's API
+has no free tier for new developers, and a post with a URL costs $0.20
+(`docs/decisions.md`). Because you post, the history records `posted_x` as
+`false` for new runs.
 
 ### Optional: publishing to LinkedIn
 
@@ -587,8 +577,8 @@ If you would rather keep the old folder or key file where it is, set `QC_POST_DA
   except placeholders: the examples in this README and the script, and the
   fake sentinel key in `tests/conftest.py`.
 - Web pages and feed entries can contain text aimed at the model. Drafts are
-  never published unless you pass `--post` or `--post-linkedin`, so read each
-  one before posting.
+  never published unless you pass `--post-linkedin` or click Post in X's compose
+  box (`--post` only opens it), so read each one before posting.
 - If a key is ever committed, deleting it later does not scrub git history —
   rotate the key.
 

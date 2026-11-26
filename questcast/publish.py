@@ -1,4 +1,4 @@
-"""Optional publishing. Runs only with --post or --post-linkedin."""
+"""Optional publishing. Runs only with --post-linkedin."""
 
 import json
 import urllib.error
@@ -10,43 +10,6 @@ MAYBE_POSTED = (
     "  LinkedIn may have published the post before this failed; check your\n"
     "  profile before re-running.\n"
 )
-
-
-def post_to_x(post: str) -> str:
-    """Publish to X. Needs four user-context credentials; a Bearer token is
-    app-only auth and cannot post."""
-    try:
-        import tweepy  # imported lazily so draft-only mode needs no dependency
-    except ImportError:
-        raise SystemExit(
-            "\n--post needs tweepy. Install it with:\n\n  ~/.qc_post_venv/bin/pip install tweepy\n"
-        ) from None
-
-    creds = config.x_credentials()
-    missing = [k for k, v in creds.items() if not v]
-    if missing:
-        raise SystemExit(
-            f"\n--post needs these in {config.env_file()}: {', '.join(missing)}\n\n"
-            "  These come from an X developer app set to Read and Write. A\n"
-            "  Bearer token is app-only auth and cannot post on your behalf.\n"
-        )
-
-    client = tweepy.Client(
-        consumer_key=creds["X_API_KEY"],
-        consumer_secret=creds["X_API_SECRET"],
-        access_token=creds["X_ACCESS_TOKEN"],
-        access_token_secret=creds["X_ACCESS_SECRET"],
-    )
-    try:
-        return str(client.create_tweet(text=post).data.get("id", ""))
-    except Exception as exc:
-        raise SystemExit(
-            f"\nX rejected the post:\n\n  {exc}\n\n"
-            "  Common causes: the app is set to Read-only (change it, then\n"
-            "  regenerate the access token — tokens keep the permissions they\n"
-            "  were created with), or a duplicate post.\n"
-            "  The drafts were not saved; re-run to try again.\n"
-        ) from None
 
 
 def post_to_linkedin(post: str) -> str:

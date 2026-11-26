@@ -8,6 +8,26 @@ All notable changes to this project are recorded here, newest first.
 
 - README: the iPhone (a-Shell) section now records a test of 4.0.0 on 25 Nov 2026: install, --list-topics, a native draft and the Home Screen Shortcut.
 
+## 4.1.0
+
+### Changed
+
+- `--post` opens X's compose box with the X draft filled in, instead of posting through X's
+  paid API. Nothing is posted until you click Post. If no browser opens, it says so and the
+  link on screen still works. New runs record `posted_x` false and `tweet_id` "", and the
+  screen and `drafts.md` always say "X — draft".
+
+### Added
+
+- Every draft run prints `Post on X: <link>` after the X draft and writes the same line into
+  that run's `drafts.md` entry. The link is X's web intent URL with the draft percent-encoded.
+
+### Removed
+
+- The tweepy route: `post_to_x`, `config.x_credentials` and the `X_API_KEY`, `X_API_SECRET`,
+  `X_ACCESS_TOKEN` and `X_ACCESS_SECRET` settings. Old history entries keep their `posted_x`
+  and `tweet_id` keys.
+
 ## 4.0.0
 
 ### Removed

@@ -26,10 +26,6 @@ ENV_NAME = re.compile(f"{PREFIXED}|{CREDENTIAL_OR_PROVIDER}")
 ROW = re.compile(r"^\|\s*`([A-Z][A-Z0-9_]+)`\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|$")
 
 CREDENTIALS_WITH_NO_DEFAULT = (
-    "X_API_KEY",
-    "X_API_SECRET",
-    "X_ACCESS_TOKEN",
-    "X_ACCESS_SECRET",
     "LINKEDIN_ACCESS_TOKEN",
     "LINKEDIN_AUTHOR_URN",
     "GROQ_API_KEY",
@@ -89,7 +85,7 @@ def clean_env(monkeypatch, tmp_path):
 
 def test_the_table_is_still_parsed():
     # A change of format must not leave the guard with nothing to check.
-    assert len(readme_table()) >= 20
+    assert len(readme_table()) >= 16
 
 
 def test_every_variable_the_code_reads_is_in_the_readme_table():
@@ -146,7 +142,7 @@ def test_readme_defaults_match_the_code(clean_env):
     for name in CREDENTIALS_WITH_NO_DEFAULT:
         expect(name, table[name] == "none")
     # The code gives each of these no value when it is unset.
-    assert not any(config.x_credentials().values())
+    assert not hasattr(config, "x_credentials")
     assert not config.linkedin_access_token()
     assert not config.linkedin_author_urn()
     assert not config.anthropic_api_key()

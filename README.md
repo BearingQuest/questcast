@@ -208,9 +208,13 @@ Keep this file out of version control — it is personal, and it is already in
 
 ## iPhone (a-Shell)
 
-Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.com/app/id1473805438)
-with its Python 3.13 and QuestCast 4.0.0 (3.1.1 was tested first, the same day). It is tested, not supported: CI can't run a-Shell. iPad is
-untested.
+Dusten tested this on an iPhone, in [a-Shell](https://apps.apple.com/app/id1473805438) with its
+Python 3.13. On 26 Nov 2026 he tested QuestCast 4.1.1: he installed the v4.1.1 wheel and ran
+`qc --search native --random-topic --post-all`. X's app opened with the draft; back in a-Shell it
+showed "Press Return to open LinkedIn's post box (Ctrl-C to skip)."; Return opened LinkedIn in
+Safari with the draft filled in. The Shortcut was tested on 4.0.0 on 25 Nov 2026 (3.1.1 was
+tested first, the same day) and was not re-run on 4.1.1. It is tested, not supported: CI can't
+run a-Shell. iPad is untested.
 
 - **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`

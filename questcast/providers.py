@@ -420,6 +420,17 @@ def limit_reason(body: str) -> str:
     return "rate limit"
 
 
+def daily_limit_sentence(name: str, seconds: float | None) -> str:
+    """R74: a daily-limit 429 says so, with the provider's own wait in minutes
+    (rounded up). The numbers come from a parsed float, never provider text."""
+    sentence = f"{name}'s daily token limit is used up."
+    if seconds is None:
+        return sentence
+    minutes = max(1, math.ceil(seconds / 60))
+    unit = "minute" if minutes == 1 else "minutes"
+    return f"{sentence} {name} suggests waiting about {minutes} {unit} ({seconds:g} s)."
+
+
 def timeout_message(provider: OpenAICompatProvider, timeout: float) -> str:
     return (
         f"\n{provider.name} sent no response within {timeout:g} seconds.\n\n"
@@ -474,7 +485,9 @@ def friendly_http_error(
         detail = str(json.loads(body)["error"]["message"])
     except (ValueError, KeyError, TypeError):
         detail = body
-    detail = clean_detail(detail, provider.api_key()) or "(no detail)"
+    detail = (
+        clean_detail(config.CONTROL_CHARS.sub(" ", detail), provider.api_key()) or "(no detail)"
+    )
     code = exc.code
     name = provider.name
     where = f" Create a new one at {provider.keys_url}." if provider.keys_url else ""
@@ -513,6 +526,12 @@ def friendly_http_error(
             f"  token limit ({code}): {detail}\n\n{remedy}\n\n  {NOTHING_LOST}"
         )
     if code == 429:
+        if limit_reason(body) == "daily token limit":  # R74
+            return (
+                f"{name} rate limit hit ({code}): {detail}\n\n"
+                f"  {daily_limit_sentence(provider.label, suggested_wait(exc.headers, body))}\n\n"
+                f"  {NOTHING_LOST}"
+            )
         retry = exc.headers.get("retry-after") if exc.headers else None
         wait = f" {name} suggests waiting {retry} seconds." if retry else ""
         hint = ""

@@ -19,14 +19,16 @@ X/Twitter post rules:
 - One clear takeaway. Plain, confident voice. No hype words
   ("game-changer", "mind-blowing", "insane").
 - 2-3 hashtags.
+- Plain text: no markdown emphasis (no **, __, or * around words).
 """.strip()
 
 LINKEDIN_RULES = """
 LinkedIn post rules:
 - Target 750-950 characters INCLUDING the closing question and hashtags.
   {max_len} is a hard ceiling. Under budget beats trimmed.
-- Short paragraphs, blank line between each. No markdown, no bold, no
-  headers, no bullet characters — LinkedIn renders none of them.
+- Short paragraphs, blank line between each. Plain text: no markdown, no
+  bold, no headers, no bullet characters, and no emphasis markers (no **,
+  __, or * around words) — LinkedIn renders none of them.
 - Open with a hook of one or two lines that earns the click on "see more":
   a specific claim, a sharp observation, a real tension, or a question with
   actual stakes. Attention must come from SUBSTANCE, not engagement bait.

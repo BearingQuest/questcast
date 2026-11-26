@@ -86,13 +86,13 @@ https://github.com/BearingQuest/questcast/releases.
 
 ```bash
 # uv, from the tag (needs git):
-uv tool install git+https://github.com/BearingQuest/questcast@v4.1.0
+uv tool install git+https://github.com/BearingQuest/questcast@v4.1.1
 # pipx, from the tag:
-pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.1.0
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.1.1
 
 # or from the release's wheel:
-uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl
-pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl
 ```
 
 **First run.** Create the data directory and a profile to fill in, and the key
@@ -136,7 +136,7 @@ build-provenance attestation. For a file you downloaded from the release (not
 for an install from git), check it with the GitHub CLI:
 
 ```bash
-gh attestation verify questcast-4.1.0-py3-none-any.whl -R BearingQuest/questcast
+gh attestation verify questcast-4.1.1-py3-none-any.whl -R BearingQuest/questcast
 ```
 
 ## Setup
@@ -212,7 +212,7 @@ Dusten tested this on an iPhone on 25 Nov 2026, in [a-Shell](https://apps.apple.
 with its Python 3.13 and QuestCast 4.0.0 (3.1.1 was tested first, the same day). It is tested, not supported: CI can't run a-Shell. iPad is
 untested.
 
-- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.0/questcast-4.1.0-py3-none-any.whl`.
+- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
   (see [Install](#install)) happens on a computer.
 - **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be
@@ -237,7 +237,13 @@ untested.
   https://support.apple.com/guide/shortcuts/add-a-shortcut-to-the-home-screen-apd735880972/ios
 - **History.** The phone keeps its own history, so duplicate checks don't span the phone and a
   computer.
-- **Post on X and LinkedIn.** If `--post`, `--post-linkedin` or `--post-all` opens no browser there, QuestCast prints the full link on its own line to copy. The links are always in `drafts.md`.
+- **Post on X and LinkedIn.** On the iPhone, `--post` opens the X app with the draft,
+  `--post-linkedin` opens LinkedIn in Safari with the text filled in, and `--post-all` opens X, then
+  pauses with "Press Return to open LinkedIn's post box (Ctrl-C to skip)." before opening LinkedIn.
+  iOS drops a second open made while a-Shell is in the background, which is why it pauses. The
+  Shortcut above has no terminal to answer on, so with `--post-all` it opens X and prints the
+  LinkedIn link to copy. If a browser opens nowhere, QuestCast prints the full link on its own line.
+  The links are always in `drafts.md`.
 
 ## Optional extras
 

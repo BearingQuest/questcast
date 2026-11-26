@@ -4,6 +4,11 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+### Documentation
+
+- README, iPhone (a-Shell): records the 26 Nov 2026 test of 4.1.1 (`--post-all` opens X, waits
+  for Return, then opens LinkedIn) and says the Shortcut was tested on 4.0.0, not re-run on 4.1.1.
+
 ## 4.1.1
 
 ### Fixed

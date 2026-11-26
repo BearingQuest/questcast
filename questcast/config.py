@@ -39,7 +39,6 @@ MAX_FEED_BYTES = 10_000_000  # feeds get their own cap; some run past 2 MB (R23)
 SEARCH_SOURCES = ("native", "rss")
 NATIVE_SEARCH_PROVIDERS = ("anthropic", "groq")  # default to native; others to rss
 FEED_TIMEOUT = 15.0  # seconds per feed request (R20)
-LINKEDIN_TIMEOUT = 30.0  # seconds for the one --post-linkedin request (R56)
 DEFAULT_RSS_PER_FEED = 3  # newest entries per feed, override with QC_POST_RSS_PER_FEED
 # Total candidates sent, best topic match first, override with
 # QC_POST_RSS_MAX_ENTRIES. Keeps one call under Groq's free 8,000 TPM (R22).
@@ -283,20 +282,3 @@ def openai_compat_model() -> str:
 def api_key(var: str) -> str:
     """GROQ_API_KEY or OPENAI_COMPAT_API_KEY, whichever the provider names."""
     return os.environ.get(var, "").strip()
-
-
-# ---------------------------------------------------------------------------
-# Publishing credentials
-# ---------------------------------------------------------------------------
-
-
-def linkedin_access_token() -> str | None:
-    return os.environ.get("LINKEDIN_ACCESS_TOKEN")
-
-
-def linkedin_author_urn() -> str | None:
-    return os.environ.get("LINKEDIN_AUTHOR_URN")
-
-
-def linkedin_api_version() -> str:
-    return os.environ.get("LINKEDIN_API_VERSION", "202601")

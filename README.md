@@ -29,7 +29,7 @@ OpenAI-compatible endpoint, can be swapped in with a flag, and RSS feeds you
 choose can replace the web search.
 
 > [!IMPORTANT]
-> Human-in-the-loop by default. Nothing is published unless you pass `--post-linkedin` (LinkedIn) or click Post yourself in X's compose box (`--post` only opens it); read each draft first.
+> Human-in-the-loop by default. Nothing is published unless you click Post yourself in X's compose box or LinkedIn's post box (`--post`, `--post-linkedin` and `--post-all` only open them); read each draft first.
 
 The posts sound like *you* because of a profile file you write once and keep
 outside this repo. That file is the whole idea: the code is a small harness,
@@ -49,7 +49,7 @@ flowchart LR
     DR --> YOU{"You review"}
   end
   RUN <-->|"one search-and-write call<br/>(or RSS feeds you choose)"| API["Groq, Anthropic or<br/>OpenAI-compatible API"]
-  YOU -. "Post on X link, or --post-linkedin" .-> PUB["X / LinkedIn"]
+  YOU -. "Post on X / Post on LinkedIn links" .-> PUB["X / LinkedIn"]
 ```
 
 Each run:
@@ -237,7 +237,7 @@ untested.
   https://support.apple.com/guide/shortcuts/add-a-shortcut-to-the-home-screen-apd735880972/ios
 - **History.** The phone keeps its own history, so duplicate checks don't span the phone and a
   computer.
-- **Post on X.** If `--post` opens no browser there, copy the printed `Post on X:` link.
+- **Post on X and LinkedIn.** If `--post`, `--post-linkedin` or `--post-all` opens no browser there, QuestCast prints the full link on its own line to copy. The links are always in `drafts.md`.
 
 ## Optional extras
 
@@ -281,7 +281,8 @@ different item.
 | `--provider NAME` | `groq`, `anthropic` or `openai-compat`. Default: `QC_POST_PROVIDER`, else `groq` |
 | `--search SOURCE` | `native` or `rss`. Default: `QC_POST_SEARCH`, else `native` for `groq` and `anthropic`, `rss` for `openai-compat` |
 | `--post` | Open X's compose box with the X draft filled in; nothing is posted until you click Post (see below) |
-| `--post-linkedin` | Publish the LinkedIn version (see below) |
+| `--post-linkedin` | Open LinkedIn's post box with the LinkedIn draft filled in; nothing is posted until you click Post (see below) |
+| `--post-all` | Open both boxes, X first, then LinkedIn; the same as `--post --post-linkedin` |
 
 For a shorter daily command, keep a wrapper outside the repo, e.g.
 `~/QuestCast/qcpost.sh`:
@@ -346,9 +347,6 @@ the shell wins, and `QC_POST_ENV_FILE` works only from the shell). Only the
 | `QC_POST_RATE_LIMIT_WAIT` | `60` | Longest wait, in seconds, that `groq` and `openai-compat` will sit out on a 429 before retrying once. `0` turns the retry off |
 | `QC_POST_DATA_DIR` | `~/QuestCast` | Where the profile, drafts, history and run log live |
 | `QC_POST_ENV_FILE` | `~/.qc_post_env` | The key file loaded at startup. Read from the shell environment only: the file can't name its own location, so setting it inside the file has no effect |
-| `LINKEDIN_ACCESS_TOKEN` | none | LinkedIn member access token, for `--post-linkedin` (see "Optional: publishing to LinkedIn") |
-| `LINKEDIN_AUTHOR_URN` | none | Your LinkedIn author URN, for `--post-linkedin` |
-| `LINKEDIN_API_VERSION` | `202601` | LinkedIn API version header sent with `--post-linkedin`; LinkedIn revises it periodically |
 
 ### Rate limits and progress
 
@@ -389,38 +387,47 @@ happens again, send that line.
 
 ### Post on X
 
-Every run prints one line after the X draft, and writes it into that run's
-`drafts.md` entry:
+Every run writes a Markdown link into that run's `drafts.md` entry, under `## X`:
 
 ```text
-Post on X: https://x.com/intent/tweet?text=...
+[Post on X](https://x.com/intent/tweet?text=...)
 ```
+
+The screen doesn't print the link. After the drafts it prints one line saying the
+compose links are in `drafts.md`, and that `--post`, `--post-linkedin` or `--post-all`
+opens them.
 
 The link is X's [web intent](https://docs.x.com/x-for-websites/post-button/guides/web-intent):
 it opens the compose box with the draft filled in, source link included. You
 edit it and click Post. `--post` opens that link in your browser for you, once,
-after the drafts are saved. If no browser opens, QuestCast says so; the link is
-already on screen. QuestCast never posts to X itself and needs no X key: X's API
+after the drafts are saved and prints `Opened X's compose box.` If no browser
+opens, QuestCast prints `No browser opened; to post on X, open this link:` and then
+the full link on its own line, so you can copy it. QuestCast never posts to X itself and needs no X key: X's API
 has no free tier for new developers, and a post with a URL costs $0.20
 (`docs/decisions.md`). Because you post, the history records `posted_x` as
 `false` for new runs.
 
-### Optional: publishing to LinkedIn
+### Post on LinkedIn
 
-Included for anyone who wants it; the author of this repo drafts and posts
-LinkedIn manually. Requires an approved LinkedIn app with the
-`w_member_social` scope, a member access token, and your author URN:
+Every run writes a Markdown link into that run's `drafts.md` entry, under `## LinkedIn`:
 
-```bash
-export LINKEDIN_ACCESS_TOKEN=...
-export LINKEDIN_AUTHOR_URN=urn:li:person:XXXXXXXX
-# optional; LinkedIn revises this periodically
-export LINKEDIN_API_VERSION=202601
+```text
+[Post on LinkedIn](https://www.linkedin.com/feed/?shareActive=true&text=...)
 ```
 
-LinkedIn's app review is meaningfully more involved than X's, and it changes
-its API version header on a schedule. If `--post-linkedin` returns a 4xx,
-check the current version header first.
+The link opens LinkedIn's post box with the draft filled in. You edit it and click
+Post. `--post-linkedin` opens that link in your browser for you, once, after the
+drafts are saved and prints `Opened LinkedIn's post box.`; `--post-all` opens the X
+link and then this one. If no browser opens, QuestCast prints
+`No browser opened; to post on LinkedIn, open this link:` and then the full link on
+its own line, so you can copy it. QuestCast never posts to LinkedIn itself and needs no LinkedIn app, token or key.
+
+LinkedIn documents a share plugin that takes a URL only
+([share plugin](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/plugins/share-plugin)).
+The `shareActive=true&text=` link is not documented, so LinkedIn could change it. If
+LinkedIn opens an empty post box, the draft is on screen and in `drafts.md`: copy it
+from there. Because you post, the history records `posted_linkedin` as `false` for
+new runs.
 
 ### Optional: scheduling
 
@@ -485,8 +492,8 @@ pinned actions.
 
 `.claude/settings.json` holds the agent rules for Claude Code: it disables
 auto and bypass-permissions modes; denies merges, PR reviews and comments,
-force-pushes, amends, rebases, tags, publishing with `--post` or
-`--post-linkedin`, and edits to the frozen tests; and asks before every push,
+force-pushes, amends, rebases, tags, publishing with `--post`,
+`--post-linkedin` or `--post-all`, and edits to the frozen tests; and asks before every push,
 `gh pr`, `gh api` and `python3` call. The rules match command text, so they
 are a guardrail, not a sandbox. Only Dusten edits it.
 
@@ -577,8 +584,9 @@ If you would rather keep the old folder or key file where it is, set `QC_POST_DA
   except placeholders: the examples in this README and the script, and the
   fake sentinel key in `tests/conftest.py`.
 - Web pages and feed entries can contain text aimed at the model. Drafts are
-  never published unless you pass `--post-linkedin` or click Post in X's compose
-  box (`--post` only opens it), so read each one before posting.
+  never published unless you click Post in X's compose box or LinkedIn's post box
+  (`--post`, `--post-linkedin` and `--post-all` only open them), so read each one
+  before posting.
 - If a key is ever committed, deleting it later does not scrub git history —
   rotate the key.
 

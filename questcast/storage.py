@@ -126,7 +126,7 @@ def log_drafts(
     x_post: str,
     li_post: str,
     x_link: str,
-    posted_li: bool,
+    li_link: str,
     via: str = "",
 ) -> None:
     ensure_data_dir()
@@ -136,8 +136,8 @@ def log_drafts(
         f"Via: {via or 'n/a'}\n"
         f"Source: {item.get('source', 'n/a')}\n"
         f"Why: {item.get('why', 'n/a')}\n\n"
-        f"## X\n\n{x_post}\n\nPost on X: {x_link}\n\n"
-        f"## LinkedIn{' (POSTED)' if posted_li else ''}\n\n{li_post}\n"
+        f"## X\n\n{x_post}\n\n[Post on X]({x_link})\n\n"
+        f"## LinkedIn\n\n{li_post}\n\n[Post on LinkedIn]({li_link})\n"
     )
     with config.drafts_file().open("a") as f:
         f.write(entry)

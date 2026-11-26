@@ -13,20 +13,39 @@ All notable changes to this project are recorded here, newest first.
 ### Changed
 
 - `--post` opens X's compose box with the X draft filled in, instead of posting through X's
-  paid API. Nothing is posted until you click Post. If no browser opens, it says so and the
-  link on screen still works. New runs record `posted_x` false and `tweet_id` "", and the
+  paid API. Nothing is posted until you click Post. If no browser opens, it prints the
+  link to copy. New runs record `posted_x` false and `tweet_id` "", and the
   screen and `drafts.md` always say "X — draft".
+- The screen no longer prints the compose links. After the drafts it prints one line saying
+  they are in `drafts.md` and that `--post`, `--post-linkedin` or `--post-all` opens them.
+  When a flag opens a box it prints `Opened X's compose box.` or `Opened LinkedIn's post
+  box.`; when no browser opens it prints `No browser opened; to post on <site>, open this
+  link:` and the full link on its own line, so it can be copied (a-Shell).
+- `--post-linkedin` opens LinkedIn's post box with the LinkedIn draft filled in, instead of
+  publishing through LinkedIn's API. Nothing is posted until you click Post. If no browser
+  opens, it prints the link to copy. With `--post` as well, X opens first,
+  then LinkedIn. New runs record `posted_linkedin` false, and the screen and `drafts.md`
+  always say "LINKEDIN — draft".
 
 ### Added
 
-- Every draft run prints `Post on X: <link>` after the X draft and writes the same line into
-  that run's `drafts.md` entry. The link is X's web intent URL with the draft percent-encoded.
+- Every draft run writes `[Post on X](<link>)` into that run's `drafts.md` entry. The link is
+  X's web intent URL with the draft percent-encoded.
+- Every draft run writes `[Post on LinkedIn](<link>)` into that run's `drafts.md` entry
+  under `## LinkedIn`. The link is
+  `https://www.linkedin.com/feed/?shareActive=true&text=` plus the draft percent-encoded.
+  LinkedIn doesn't document it, so LinkedIn could change it; if it opens an empty post box,
+  the draft is on screen and in `drafts.md`.
+- `--post-all` opens both boxes, X first, then LinkedIn; the same as `--post --post-linkedin`.
 
 ### Removed
 
 - The tweepy route: `post_to_x`, `config.x_credentials` and the `X_API_KEY`, `X_API_SECRET`,
   `X_ACCESS_TOKEN` and `X_ACCESS_SECRET` settings. Old history entries keep their `posted_x`
   and `tweet_id` keys.
+- The LinkedIn API route: `post_to_linkedin`, `questcast/publish.py` and the
+  `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN` and `LINKEDIN_API_VERSION` settings. Old
+  history entries keep their `posted_linkedin` key.
 
 ## 4.0.0
 

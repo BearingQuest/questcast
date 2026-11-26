@@ -4,9 +4,23 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
-### Documentation
+## 4.1.1
 
-- README: the iPhone (a-Shell) section now records a test of 4.0.0 on 25 Nov 2026: install, --list-topics, a native draft and the Home Screen Shortcut.
+### Fixed
+
+- iPhone (a-Shell): `--post-all`, and `--post` with `--post-linkedin`, opens X, then waits for
+  Return before opening LinkedIn ("Press Return to open LinkedIn's post box (Ctrl-C to
+  skip)."), because iOS drops a second open made while a-Shell is in the background. Ctrl-C or
+  end of input skips LinkedIn and prints its link. With no terminal (the Shortcut), it opens X,
+  prints the LinkedIn link and never says "Opened LinkedIn's post box." without opening it.
+  Other platforms and single-site flags are unchanged.
+- A daily-limit 429 (a body naming "tokens per day") now says "Groq's daily token limit is used
+  up. Groq suggests waiting about N minutes (S s)." instead of "Wait a minute and re-run." and
+  the tokens-per-minute hint. Other 429s keep their text. Provider error text is now stripped
+  of control characters in every HTTP error message.
+- Paired Markdown emphasis (`**text**`, `__text__`, `*text*`) is removed from both drafts before
+  the length checks, the compose links, the screen and `drafts.md`, and the prompt asks for plain
+  text. URLs, a lone `*`, bullets, hashtags and markers inside a word are left alone.
 
 ## 4.1.0
 
@@ -46,6 +60,10 @@ All notable changes to this project are recorded here, newest first.
 - The LinkedIn API route: `post_to_linkedin`, `questcast/publish.py` and the
   `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN` and `LINKEDIN_API_VERSION` settings. Old
   history entries keep their `posted_linkedin` key.
+
+### Documentation
+
+- README: the iPhone (a-Shell) section now records a test of 4.0.0 on 25 Nov 2026: install, --list-topics, a native draft and the Home Screen Shortcut.
 
 ## 4.0.0
 

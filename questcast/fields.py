@@ -37,6 +37,26 @@ def trim(text: str, limit: int) -> str:
     return cut[: cut.rfind(" ")].strip() + "…"
 
 
+URL_PATTERN = re.compile(r"(https?://\S+)")
+# Paired emphasis markers: text just inside both markers, none just outside
+# (so "2*3*4", "a**b**c" and "snake__case__name" stay as they are).
+EMPHASIS_PATTERNS = (
+    re.compile(r"(?<![\w*])\*\*(?=[^\s*])([^\n]*?[^\s*])\*\*(?![\w*])"),
+    re.compile(r"(?<!\w)__(?=[^\s_])([^\n]*?[^\s_])__(?!\w)"),
+    re.compile(r"(?<![\w*])\*(?=[^\s*])([^*\n]*[^\s*])\*(?![\w*])"),
+)
+
+
+def strip_emphasis(text: str) -> str:
+    """Remove paired Markdown emphasis (**text**, __text__, *text*), which X and
+    LinkedIn show literally. URLs, a lone "*", bullets and hashtags are left alone."""
+    parts = URL_PATTERN.split(text)
+    for i in range(0, len(parts), 2):  # odd parts are the URLs
+        for pattern in EMPHASIS_PATTERNS:
+            parts[i] = pattern.sub(r"\1", parts[i])
+    return "".join(parts)
+
+
 def compose_posts(item: dict[str, str]) -> tuple[str, str]:
     return f"{item['tweet']}\n{item['url']}", f"{item['linkedin']}\n\n{item['url']}"
 

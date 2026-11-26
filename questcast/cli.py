@@ -22,6 +22,7 @@ from questcast.fields import (
     compose_posts,
     linkedin_compose_link,
     parse_fields,
+    strip_emphasis,
     trim,
     x_compose_link,
 )
@@ -119,8 +120,9 @@ def generate_item(
     # X gets hard-trimmed (the platform enforces the limit anyway). LinkedIn is
     # only flagged — trimming from the end would eat the closing question and
     # hashtags, which is worse than a draft you shorten by hand.
-    item["tweet"] = trim(item["tweet"], MAX_TWEET_TEXT)
-    item["linkedin"] = item["linkedin"].strip()
+    # R75: X and LinkedIn show Markdown literally.
+    item["tweet"] = trim(strip_emphasis(item["tweet"]), MAX_TWEET_TEXT)
+    item["linkedin"] = strip_emphasis(item["linkedin"]).strip()
     if len(item["linkedin"]) > MAX_LINKEDIN_TEXT:
         print(
             f"WARNING: LinkedIn draft is {len(item['linkedin'])} characters "
@@ -308,7 +310,29 @@ def run() -> None:
     if open_x:
         open_compose_box(x_link, "X", "X's compose box")
     if open_linkedin:
-        open_compose_box(li_link, "LinkedIn", "LinkedIn's post box")
+        if open_x and platform_name() == "ios" and not ios_wait_for_return():
+            print_link_fallback(li_link, "LinkedIn")
+        else:
+            open_compose_box(li_link, "LinkedIn", "LinkedIn's post box")
+
+
+def platform_name() -> str:
+    """sys.platform, read here so tests can patch it alone."""
+    return sys.platform
+
+
+def ios_wait_for_return() -> bool:
+    """R73: on iOS, opening X sends a-Shell to the background and iOS drops a
+    second open, so LinkedIn opens only after a Return. False means skip it:
+    no terminal to ask on, end of input, or Ctrl-C."""
+    if not sys.stdin.isatty():
+        return False
+    print("Press Return to open LinkedIn's post box (Ctrl-C to skip).")
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    return True
 
 
 def open_compose_box(link: str, site: str, box: str) -> None:
@@ -323,8 +347,13 @@ def open_compose_box(link: str, site: str, box: str) -> None:
     if opened:
         print(f"Opened {box}.")
     else:
-        print(f"No browser opened; to post on {site}, open this link:")
-        print(link)
+        print_link_fallback(link, site)
+
+
+def print_link_fallback(link: str, site: str) -> None:
+    """The link on its own line, so it can be copied."""
+    print(f"No browser opened; to post on {site}, open this link:")
+    print(link)
 
 
 def init() -> None:

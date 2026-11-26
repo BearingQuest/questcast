@@ -3,6 +3,7 @@
 import argparse
 import random
 import sys
+import webbrowser
 from datetime import date
 from pathlib import Path
 
@@ -17,10 +18,10 @@ from questcast.config import (
     SEARCH_SOURCES,
 )
 from questcast.dedup import is_used, used_from
-from questcast.fields import compose_posts, parse_fields, trim
+from questcast.fields import compose_posts, parse_fields, trim, x_compose_link
 from questcast.prompt import build_prompt, estimate_tokens
 from questcast.providers import make_provider, select_provider
-from questcast.publish import post_to_linkedin, post_to_x
+from questcast.publish import post_to_linkedin
 from questcast.search import make_search, select_search
 from questcast.storage import load_history, load_profile, log_drafts, log_run, save_history
 
@@ -157,7 +158,10 @@ def build_parser() -> argparse.ArgumentParser:
         "anthropic and groq, rss for openai-compat)",
     )
     parser.add_argument(
-        "--post", action="store_true", help="publish the X version instead of only drafting"
+        "--post",
+        action="store_true",
+        help="open X's compose box with the X draft filled in; nothing is posted "
+        "until you click Post",
     )
     parser.add_argument(
         "--post-linkedin",
@@ -250,7 +254,7 @@ def run() -> None:
     item = generate_item(provider, search, profile, topic, used_urls, used_titles)
     x_post, li_post = compose_posts(item)
 
-    tweet_id = post_to_x(x_post) if args.post else ""
+    x_link = x_compose_link(x_post)
     li_id = post_to_linkedin(li_post) if args.post_linkedin else ""
 
     history.append(
@@ -259,29 +263,43 @@ def run() -> None:
             "topic": topic,
             "url": item["url"],
             "title": item["title"],
-            "posted_x": bool(tweet_id),
+            "posted_x": False,  # the user posts from X's compose box; we can't know
             "posted_linkedin": bool(li_id),
-            "tweet_id": tweet_id,
+            "tweet_id": "",
             "provider": provider.name,
             "model": provider.model,
             "search": search.name,
         }
     )
     save_history(history)
-    log_drafts(item, topic, x_post, li_post, bool(tweet_id), bool(li_id), storage.RUN_VIA)
+    log_drafts(item, topic, x_post, li_post, x_link, bool(li_id), storage.RUN_VIA)
     # R53, R59: to check the token estimate against real figures
     log_run(f"OK — [{topic}] {item['title']} ({item['url']}){storage.RUN_TOKENS}")
 
     rule = "=" * 70
     print(rule)
-    print("X — PUBLISHED" if tweet_id else "X — draft")
+    print("X — draft")
     print(rule)
     print(x_post)
+    print(f"Post on X: {x_link}")
     print(f"\n{rule}")
     print("LINKEDIN — PUBLISHED" if li_id else "LINKEDIN — draft")
     print(f"{rule}")
     print(li_post)
     print(f"\n[{len(item['linkedin'])} characters] Saved to {config.drafts_file()}")
+
+    if args.post:
+        open_compose_box(x_link)
+
+
+def open_compose_box(link: str) -> None:
+    """--post: open X's compose box once. Never raises; the link is on screen."""
+    try:
+        opened = webbrowser.open(link)
+    except webbrowser.Error:
+        opened = False
+    if not opened:
+        print("No browser opened; use the Post on X link above.")
 
 
 def init() -> None:

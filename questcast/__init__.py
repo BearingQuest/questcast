@@ -16,8 +16,9 @@ this repo (default: ~/QuestCast/author_profile.md). `qc init` copies the
 scaffold, author_profile.example.md in this package, there to fill in.
 
 Default behavior is draft-only: both posts are printed and appended to
-drafts.md for you to review and post yourself. Optional flags can publish to
-X (--post) or LinkedIn (--post-linkedin).
+drafts.md for you to review and post yourself. Each run also prints a link that
+opens X's compose box with the X draft filled in; --post opens it for you, and
+nothing is posted until you click Post. --post-linkedin can publish to LinkedIn.
 
 The model comes from one of three providers (--provider, default groq):
 
@@ -31,7 +32,6 @@ Requirements:
     Installed qc, from the clone:  uv tool install --reinstall '.[anthropic]'
     The clone's venv:               ~/.qc_post_venv/bin/pip install -e '.[anthropic]'
     The pinned version is in pyproject.toml.
-    pip install tweepy           (only for --post; the clone's venv only)
 
 Credentials are read from ~/.qc_post_env — see README.md.
 """

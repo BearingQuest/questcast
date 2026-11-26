@@ -1,6 +1,6 @@
 [project]
 name = "questcast"
-version = "4.0.0"
+version = "4.1.0"
 description = "Drafts X and LinkedIn posts from an author profile and a topic chosen at run time."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -9,8 +9,7 @@ license-files = ["LICENSE"]
 # Standard library only at runtime (v3 R5).
 dependencies = []
 
-# Optional SDK, pinned exactly (R48): anthropic for --provider anthropic. No x extra for
-# tweepy yet: it requires oauthlib<4, which has open advisories (docs/decisions.md).
+# Optional SDK, pinned exactly (R48): anthropic for --provider anthropic.
 [project.optional-dependencies]
 anthropic = ["anthropic==2.9.0"]
 
@@ -83,9 +82,9 @@ no_implicit_reexport = true
 strict_equality = true
 extra_checks = true
 
-# Optional SDKs, imported lazily only by --provider anthropic and --post; not installed in dev.
+# Optional SDK, imported lazily only by --provider anthropic; not installed in dev.
 [[tool.mypy.overrides]]
-module = ["anthropic", "anthropic.*", "tweepy", "tweepy.*"]
+module = ["anthropic", "anthropic.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

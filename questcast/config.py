@@ -290,13 +290,6 @@ def api_key(var: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def x_credentials() -> dict:
-    return {
-        k: os.environ.get(k)
-        for k in ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET")
-    }
-
-
 def linkedin_access_token() -> str | None:
     return os.environ.get("LINKEDIN_ACCESS_TOKEN")
 

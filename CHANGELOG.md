@@ -4,6 +4,12 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+### Documentation
+
+- README: PyPI is the first install option (`uv tool install questcast`, `pipx install
+  --python python3.14 questcast`; `pip install questcast` in a-Shell), the GitHub release stays
+  as the option for checking provenance first, and a PyPI version badge is added.
+
 ## 4.1.2
 
 ### Added

@@ -1,0 +1,142 @@
+name: PyPI
+
+# Publishing a GitHub release (Dusten does this; agents never do) uploads the
+# release's wheel and sdist to PyPI with Trusted Publishing: OIDC, no stored
+# token. The files are the ones release.yml built and attested; nothing is
+# rebuilt here. A manual run with a tag uploads the same files to TestPyPI only.
+# Not a required check.
+#
+# Three jobs, so the OIDC token only exists where nothing is fetched or run:
+#   - fetch:           read-only token, no OIDC. Checks the tag is vX.Y.Z and its
+#                      release is not a draft, downloads the wheel and the sdist,
+#                      verifies both attestations came from release.yml for this
+#                      tag, checks the file names and uploads them as an artifact.
+#   - publish-pypi:    release event only. OIDC token and the `pypi` environment,
+#                      which waits for Dusten's approval. No checkout, no uv, no
+#                      build: it downloads that artifact and uploads it.
+#   - publish-testpypi: workflow_dispatch only. The same, with the `testpypi`
+#                      environment and the TestPyPI upload URL.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to upload to TestPyPI (vX.Y.Z; its release must be published)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    name: fetch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read # gh release view and gh release download; attestation lookups need no more on a public repo
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Check the tag is vX.Y.Z
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag is not vX.Y.Z"
+            exit 1
+          fi
+      - name: Check the release is published, not a draft
+        run: |
+          draft="$(gh release view "$TAG" --json isDraft --jq .isDraft)"
+          if [[ "$draft" != "false" ]]; then
+            echo "::error::release $TAG is a draft"
+            exit 1
+          fi
+      # The wheel and the sdist only: not the SBOM or the release notes.
+      - name: Download the wheel and the sdist
+        run: gh release download "$TAG" --pattern '*.whl' --pattern '*.tar.gz' --dir dist
+      # Any failure fails the job. --source-ref ties each attestation to this
+      # tag, so one made by release.yml for another tag can't be replayed.
+      - name: Verify the attestations
+        run: |
+          for file in dist/*; do
+            gh attestation verify "$file" \
+              -R BearingQuest/questcast \
+              --signer-workflow BearingQuest/questcast/.github/workflows/release.yml \
+              --source-ref "refs/tags/$TAG"
+          done
+      - name: Check the files are one wheel and one sdist for this version
+        run: |
+          version="${TAG#v}"
+          shopt -s nullglob
+          files=(dist/*)
+          wheels=(dist/*.whl)
+          sdists=(dist/*.tar.gz)
+          if [[ ${#files[@]} -ne 2 || ${#wheels[@]} -ne 1 || ${#sdists[@]} -ne 1 ]]; then
+            echo "::error::dist/ must hold exactly one wheel and one sdist"
+            exit 1
+          fi
+          if [[ "${wheels[0]}" != "dist/questcast-${version}-"*.whl ]]; then
+            echo "::error::wheel name does not match version ${version}"
+            exit 1
+          fi
+          if [[ "${sdists[0]}" != "dist/questcast-${version}.tar.gz" ]]; then
+            echo "::error::sdist name does not match version ${version}"
+            exit 1
+          fi
+      - name: Print the sha256 of each file
+        run: sha256sum dist/*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-pypi:
+    name: publish-pypi
+    needs: fetch
+    if: github.event_name == 'release'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/questcast
+    permissions:
+      id-token: write # OIDC token PyPI exchanges for a short-lived upload token
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          print-hash: true
+
+  publish-testpypi:
+    name: publish-testpypi
+    needs: fetch
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/questcast
+    permissions:
+      id-token: write # OIDC token TestPyPI exchanges for a short-lived upload token
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          print-hash: true

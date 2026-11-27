@@ -4,6 +4,15 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+### Added
+
+- PyPI publishing: publishing a GitHub release starts `pypi.yml`, which verifies the release's
+  wheel and sdist attestations and, after the maintainer approves the `pypi` environment,
+  uploads those same files with Trusted Publishing (no stored token). A manual run with a tag
+  uploads to TestPyPI only.
+- PyPI project page: project URLs (Homepage, Source, Changelog, Issues), keywords and
+  classifiers; the README's images and LICENSE link are absolute so they show on PyPI.
+
 ### Documentation
 
 - README, iPhone (a-Shell): records the 26 Nov 2026 test of 4.1.1 (`--post-all` opens X, waits

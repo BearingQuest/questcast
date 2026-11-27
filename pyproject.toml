@@ -6,8 +6,25 @@ readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
 license-files = ["LICENSE"]
+keywords = ["social-media", "x", "linkedin", "drafts", "cli"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Operating System :: iOS",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications",
+    "Topic :: Utilities",
+]
 # Standard library only at runtime (v3 R5).
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/BearingQuest/questcast"
+Source = "https://github.com/BearingQuest/questcast"
+Changelog = "https://github.com/BearingQuest/questcast/blob/master/CHANGELOG.md"
+Issues = "https://github.com/BearingQuest/questcast/issues"
 
 # Optional SDK, pinned exactly (R48): anthropic for --provider anthropic.
 [project.optional-dependencies]

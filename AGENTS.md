@@ -58,6 +58,9 @@ the five required checks in `.github/rulesets/main.json`:
 
 Not required: `audit-daily.yml` (daily pip-audit), `sbom.yml`, `scorecard.yml`,
 `release.yml` (runs on `v*` tags; builds, attests and drafts the release),
+`pypi.yml` (runs when a release is published; uploads its attested wheel and sdist to PyPI
+with Trusted Publishing, after Dusten approves the `pypi` environment; a manual run with a tag
+uploads to TestPyPI only),
 `claude-review.yml` (inline review comments from the rules in this file) and
 `autofix-notice.yml`. Renaming, removing or adding a job that runs on pull requests means
 updating `.github/rulesets/main.json` in the same pull request, and saying in the PR
@@ -160,7 +163,8 @@ item.
 - Change repository, organization or account security settings (Dependabot, code scanning,
   Actions policy, auto-delete branches), run any block from the GitHub settings-as-code doc,
   or create, rename or transfer repositories.
-- Create or push tags, publish releases or packages.
+- Create or push tags, publish releases or packages. Publishing a GitHub release also starts
+  `pypi.yml`, whose `pypi` environment waits for Dusten's approval.
 - Change DNS, domain or GitHub Pages settings (not used in this repo; the rule stays).
 - Edit `managed-settings.json`, `~/.claude/settings.json` or this repo's
   `.claude/settings.json` (or `.claude/settings.local.json`), or run `bq-merge`.

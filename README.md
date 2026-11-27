@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://bearingquest.com">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/bearing-quest-lockup-on-dark.svg">
-      <img alt="Bearing Quest" src="docs/readme/bearing-quest-lockup-on-light.svg" width="220">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BearingQuest/questcast/master/docs/readme/bearing-quest-lockup-on-dark.svg">
+      <img alt="Bearing Quest" src="https://raw.githubusercontent.com/BearingQuest/questcast/master/docs/readme/bearing-quest-lockup-on-light.svg" width="220">
     </picture>
   </a>
 </p>
@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml/badge.svg?branch=master"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/BearingQuest/questcast"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/BearingQuest/questcast/badge"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1B365D"></a>
+  <a href="https://github.com/BearingQuest/questcast/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1B365D"></a>
   <img alt="Python 3.13 or newer" src="https://img.shields.io/badge/python-3.13+-1B365D">
 </p>
 
@@ -38,7 +38,7 @@ guardrails live.
 
 ## How it works
 
-<img alt="Terminal demo: qc --help, then qc --list-topics showing a three-topic menu from a made-up profile." src="docs/readme/demo.gif" width="720">
+<img alt="Terminal demo: qc --help, then qc --list-topics showing a three-topic menu from a made-up profile." src="https://raw.githubusercontent.com/BearingQuest/questcast/master/docs/readme/demo.gif" width="720">
 
 ```mermaid
 flowchart LR

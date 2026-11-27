@@ -30,3 +30,13 @@ Issues of particular interest:
 
 Only the latest release is supported (4.x today). Security fixes land on
 `master` and ship in the next release, which is what users install.
+
+## Releases and PyPI
+
+Pushing a `v*` tag makes `release.yml` build the wheel and the sdist and open a draft GitHub
+release with build-provenance attestations. Publishing that release starts `pypi.yml`, which
+downloads the wheel and the sdist, verifies both attestations against `release.yml`, and
+then waits for the maintainer's approval of the `pypi` environment before uploading the same
+files to PyPI. Uploads use PyPI Trusted Publishing (OIDC): no PyPI token is stored anywhere.
+A manual run of `pypi.yml` with a tag uploads to TestPyPI only, behind the `testpypi`
+environment.

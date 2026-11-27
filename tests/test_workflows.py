@@ -17,6 +17,7 @@ WORKFLOWS = sorted(WORKFLOW_DIR.glob("*.yml"))
 SCORECARD = WORKFLOW_DIR / "scorecard.yml"
 REVIEW = WORKFLOW_DIR / "claude-review.yml"
 RELEASE = WORKFLOW_DIR / "release.yml"
+PYPI = WORKFLOW_DIR / "pypi.yml"
 CI = WORKFLOW_DIR / "ci.yml"
 MAIN_RULESET = REPO_ROOT / ".github" / "rulesets" / "main.json"
 
@@ -116,12 +117,15 @@ def test_every_job_permission_has_a_comment(path):
         assert re.search(r" # \S", grant), grant.strip()
 
 
-def test_id_token_write_is_only_on_scorecard_claude_review_and_release():
+def test_id_token_write_is_only_on_scorecard_claude_review_release_and_pypi():
     holders = {path for path in WORKFLOWS if "id-token:" in text(path)}
-    assert holders == {SCORECARD, REVIEW, RELEASE}
+    assert holders == {SCORECARD, REVIEW, RELEASE, PYPI}
     for path in holders:
         # Comments may mention the permission; only a real grant line counts.
-        assert len(re.findall(r"^\s+id-token:", text(path), re.MULTILINE)) == 1, path.name
+        # pypi.yml has one grant in each of its two publish jobs.
+        expected = 2 if path == PYPI else 1
+        grants = re.findall(r"^\s+id-token:", text(path), re.MULTILINE)
+        assert len(grants) == expected, path.name
         assert re.search(r"^ {6}id-token: write # \S", text(path), re.MULTILINE), path.name
     for path in (SCORECARD, REVIEW):
         assert re.search(r"^permissions: \{\}$", text(path), re.MULTILINE), path.name

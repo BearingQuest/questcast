@@ -24,9 +24,16 @@ ASSETS = ROOT / "docs" / "readme"
 
 # Hosts an image in README.md may load from. GitHub proxies each one through
 # camo, so a viewer's browser never contacts them directly.
-ALLOWED_IMAGE_HOSTS = {"github.com", "img.shields.io", "api.scorecard.dev"}
+ALLOWED_IMAGE_HOSTS = {
+    "github.com",
+    "img.shields.io",
+    "api.scorecard.dev",
+    "raw.githubusercontent.com",
+}
 # github.com images are workflow status badges in this organization only.
 GITHUB_BADGE_PATH = re.compile(r"/BearingQuest/[\w.-]+/actions/workflows/[\w.-]+\.ya?ml/badge\.svg")
+# PyPI shows no relative paths, so the README's own images are absolute raw URLs on master.
+RAW_ASSET_PREFIX = "/BearingQuest/questcast/master/docs/readme/"
 ASSET_SUFFIXES = {".svg", ".png", ".gif", ".jpg", ".jpeg", ".webp"}
 MAX_ASSET_BYTES = 5 * 1024 * 1024
 
@@ -120,7 +127,24 @@ def _all_images() -> list[tuple[str, str | None]]:
     return images
 
 
+def _is_remote(url: str) -> bool:
+    parts = urlsplit(url)
+    return bool(parts.scheme or parts.netloc) and not _raw_asset_name(url)
+
+
+def _raw_asset_name(url: str) -> str | None:
+    """The docs/readme/ file name when url is this repository's raw URL for one, else None."""
+    parts = urlsplit(url)
+    if parts.hostname == "raw.githubusercontent.com" and parts.path.startswith(RAW_ASSET_PREFIX):
+        return parts.path[len(RAW_ASSET_PREFIX) :]
+    return None
+
+
 def _local_asset(url: str) -> Path:
+    name = _raw_asset_name(url)
+    if name is not None:
+        assert "/" not in name, f"{url}: raw README images sit directly in docs/readme/"
+        url = f"docs/readme/{name}"
     parts = urlsplit(url)
     assert not parts.query and not parts.fragment, (
         f"{url}: local image URLs take no query or fragment"
@@ -141,7 +165,7 @@ def test_readme_has_images_to_check() -> None:
 def test_every_image_has_alt_text_and_an_allowed_source(url: str, alt: str | None) -> None:
     assert alt is not None and alt.strip(), f"{url}: alt text is missing or empty"
     parts = urlsplit(url)
-    if parts.scheme or parts.netloc:
+    if _is_remote(url):
         assert parts.scheme == "https", f"{url}: remote images must use https"
         assert parts.hostname in ALLOWED_IMAGE_HOSTS, (
             f"{url}: {parts.hostname} is not an allowed host"
@@ -162,11 +186,7 @@ def test_every_picture_has_an_img_fallback() -> None:
 def test_every_asset_is_used_and_small_enough() -> None:
     if not ASSETS.is_dir():
         return
-    used = {
-        _local_asset(url)
-        for url, _ in _all_images()
-        if not (urlsplit(url).scheme or urlsplit(url).netloc)
-    }
+    used = {_local_asset(url) for url, _ in _all_images() if not _is_remote(url)}
     for path in sorted(ASSETS.iterdir()):
         assert not path.is_symlink(), f"{path.name}: symlinks are not allowed"
         if path.suffix == ".tape":
@@ -219,3 +239,31 @@ def test_each_tape_writes_an_existing_gif_in_docs_readme(tape: Path) -> None:
         assert path.is_file(), (
             f"{tape.name}: {output} has not been recorded (run vhs {tape.relative_to(ROOT)})"
         )
+
+
+def test_raw_githubusercontent_is_only_for_this_repositorys_readme_assets() -> None:
+    for url, _ in _all_images():
+        parts = urlsplit(url)
+        if parts.hostname == "raw.githubusercontent.com":
+            assert _raw_asset_name(url), f"{url}: not under {RAW_ASSET_PREFIX}"
+
+
+RELATIVE_TARGETS = (
+    re.compile(r"""\b(?:src|href)\s*=\s*["']([^"']*)["']""", re.IGNORECASE),
+    re.compile(r"""\bsrcset\s*=\s*["']([^"']*)["']""", re.IGNORECASE),
+    re.compile(r"(?<!\\)\]\(\s*<?([^)\s>]*)"),
+    re.compile(MD_REF_DEFINITION.pattern, re.MULTILINE),
+)
+
+
+def test_readme_has_no_relative_targets_except_anchors() -> None:
+    """PyPI renders the README outside the repository, so a relative path would break."""
+    text = _readme_text()
+    targets: list[str] = []
+    for pattern in RELATIVE_TARGETS[:3]:
+        targets += [m.group(1) for m in pattern.finditer(text)]
+    targets += [url for _label, url in MD_REF_DEFINITION.findall(text)]
+    candidates = [part.strip().split(" ")[0] for target in targets for part in target.split(",")]
+    assert candidates, "no links found; the parser is broken"
+    for target in filter(None, candidates):
+        assert target.startswith(("#", "https://")), f"relative or non-https target: {target}"

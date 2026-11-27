@@ -403,7 +403,10 @@ def suggested_wait(headers, body: str) -> float | None:
         if math.isfinite(seconds) and seconds >= 0:
             return seconds
     found = re.search(r"try again in (\d+(?:\.\d+)?)s\b", body, re.IGNORECASE)
-    return float(found.group(1)) if found else None
+    if not found:
+        return None
+    seconds = float(found.group(1))  # a very long digit string parses to inf
+    return seconds if math.isfinite(seconds) else None
 
 
 def limit_reason(body: str) -> str:
@@ -424,7 +427,7 @@ def daily_limit_sentence(name: str, seconds: float | None) -> str:
     """R74: a daily-limit 429 says so, with the provider's own wait in minutes
     (rounded up). The numbers come from a parsed float, never provider text."""
     sentence = f"{name}'s daily token limit is used up."
-    if seconds is None:
+    if seconds is None or not math.isfinite(seconds) or seconds < 0:
         return sentence
     minutes = max(1, math.ceil(seconds / 60))
     unit = "minute" if minutes == 1 else "minutes"

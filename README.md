@@ -86,13 +86,13 @@ https://github.com/BearingQuest/questcast/releases.
 
 ```bash
 # uv, from the tag (needs git):
-uv tool install git+https://github.com/BearingQuest/questcast@v4.1.1
+uv tool install git+https://github.com/BearingQuest/questcast@v4.1.2
 # pipx, from the tag:
-pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.1.1
+pipx install --python python3.14 git+https://github.com/BearingQuest/questcast@v4.1.2
 
 # or from the release's wheel:
-uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl
-pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl
+uv tool install https://github.com/BearingQuest/questcast/releases/download/v4.1.2/questcast-4.1.2-py3-none-any.whl
+pipx install --python python3.14 https://github.com/BearingQuest/questcast/releases/download/v4.1.2/questcast-4.1.2-py3-none-any.whl
 ```
 
 **First run.** Create the data directory and a profile to fill in, and the key
@@ -136,7 +136,7 @@ build-provenance attestation. For a file you downloaded from the release (not
 for an install from git), check it with the GitHub CLI:
 
 ```bash
-gh attestation verify questcast-4.1.1-py3-none-any.whl -R BearingQuest/questcast
+gh attestation verify questcast-4.1.2-py3-none-any.whl -R BearingQuest/questcast
 ```
 
 ## Setup
@@ -216,7 +216,7 @@ Safari with the draft filled in. The Shortcut was tested on 4.0.0 on 25 Nov 2026
 tested first, the same day) and was not re-run on 4.1.1. It is tested, not supported: CI can't
 run a-Shell. iPad is untested.
 
-- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.1/questcast-4.1.1-py3-none-any.whl`.
+- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.2/questcast-4.1.2-py3-none-any.whl`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
   (see [Install](#install)) happens on a computer.
 - **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be

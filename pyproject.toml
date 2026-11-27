@@ -1,6 +1,6 @@
 [project]
 name = "questcast"
-version = "4.1.1"
+version = "4.1.2"
 description = "Drafts X and LinkedIn posts from an author profile and a topic chosen at run time."
 readme = "README.md"
 requires-python = ">=3.13"

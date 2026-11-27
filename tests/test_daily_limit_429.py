@@ -72,6 +72,22 @@ def test_tpd_429_without_a_wait_just_says_it_is_used_up(web, groq):
     assert "suggests waiting" not in out
 
 
+def test_tpd_429_with_an_overlong_wait_just_says_it_is_used_up(web, groq):
+    text = TPD.replace("try again in 31m7.2s.", "try again in " + "9" * 400 + "s.")
+    out = message_for(web, groq, text)
+    assert "Groq's daily token limit is used up." in out
+    assert "suggests waiting" not in out
+
+
+def test_suggested_wait_ignores_a_non_finite_body_value():
+    assert providers.suggested_wait({}, "try again in " + "9" * 400 + "s") is None
+
+
+@pytest.mark.parametrize("seconds", [float("inf"), float("nan"), -5.0])
+def test_daily_limit_sentence_ignores_a_bad_wait(seconds):
+    assert providers.daily_limit_sentence("Groq", seconds) == "Groq's daily token limit is used up."
+
+
 def test_tpm_429_keeps_todays_text(web, groq):
     out = message_for(web, groq, TPM, "27")
     assert "Wait a minute and re-run. groq suggests waiting 27 seconds." in out

@@ -4,6 +4,8 @@ All notable changes to this project are recorded here, newest first.
 
 ## Unreleased
 
+## 4.1.2
+
 ### Added
 
 - PyPI publishing: publishing a GitHub release starts `pypi.yml`, which verifies the release's
@@ -12,6 +14,13 @@ All notable changes to this project are recorded here, newest first.
   uploads to TestPyPI only.
 - PyPI project page: project URLs (Homepage, Source, Changelog, Issues), keywords and
   classifiers; the README's images and LICENSE link are absolute so they show on PyPI.
+
+### Fixed
+
+- A 429 whose body says "try again in" followed by a very long digit string no longer raises
+  `OverflowError` while the error is being formatted. `suggested_wait` returns no wait for a
+  non-finite body value, and the daily-limit sentence leaves out the wait when it is not finite
+  or is negative.
 
 ### Documentation
 

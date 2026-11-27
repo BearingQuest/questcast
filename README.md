@@ -18,6 +18,7 @@
   <a href="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/BearingQuest/questcast/actions/workflows/ci.yml/badge.svg?branch=master"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/BearingQuest/questcast"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/BearingQuest/questcast/badge"></a>
   <a href="https://github.com/BearingQuest/questcast/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1B365D"></a>
+  <a href="https://pypi.org/project/questcast/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/questcast"></a>
   <img alt="Python 3.13 or newer" src="https://img.shields.io/badge/python-3.13+-1B365D">
 </p>
 
@@ -80,9 +81,20 @@ Each run:
 
 ## Install
 
-Install the `qc` command from a tagged release (Python 3.13 or newer; `uv`
-fetches it if you don't have it). Releases are listed at
-https://github.com/BearingQuest/questcast/releases.
+Install the `qc` command from PyPI (Python 3.13 or newer; `uv` fetches it if
+you don't have it):
+
+```bash
+uv tool install questcast
+# or pipx:
+pipx install --python python3.14 questcast
+```
+
+To check the provenance of what you install first, use a tagged release from
+GitHub instead. Releases are listed at
+https://github.com/BearingQuest/questcast/releases. The PyPI files are the same
+files as the GitHub release, so `gh attestation verify` works on a file from
+either.
 
 ```bash
 # uv, from the tag (needs git):
@@ -216,7 +228,7 @@ Safari with the draft filled in. The Shortcut was tested on 4.0.0 on 25 Nov 2026
 tested first, the same day) and was not re-run on 4.1.1. It is tested, not supported: CI can't
 run a-Shell. iPad is untested.
 
-- **Install.** `pip install https://github.com/BearingQuest/questcast/releases/download/v4.1.2/questcast-4.1.2-py3-none-any.whl`.
+- **Install.** `pip install questcast`.
   The `qc` command then works in a-Shell. Verifying the download with `gh attestation verify`
   (see [Install](#install)) happens on a computer.
 - **Settings.** Only `Documents` is writable in a-Shell, so QuestCast's default folders can't be
